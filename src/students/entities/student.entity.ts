@@ -1,44 +1,39 @@
-import { IsString } from "class-validator";
-import { Entity,Column, PrimaryColumn } from "typeorm";
+import { Entity, Column, PrimaryColumn } from 'typeorm';
 @Entity()
-export class Student{
-  
-    @PrimaryColumn()
-    email: string;
-  
-    @Column()
-    username: string;
+export class Student {
+  @PrimaryColumn()
+  email: string;
 
-    @Column()
-    password: string;
+  @Column()
+  username: string;
 
-    @Column()
-    address:string;
+  @Column()
+  password: string;
 
-    @Column()
-    age:number;
+  @Column()
+  address: string;
 
-    @Column()
-    @IsString()
-    contact:string;
+  @Column()
+  age: number;
 
-    @Column()
-    img:string;
+  @Column()
+  contact: string;
 
-    @Column({default:"STUDENT"})
-    role:string
-    
-    @Column({default:false})
-    is_suspended:boolean
+  @Column()
+  img: string;
 
-    @Column({default:false})
-    is_verified:boolean
+  @Column({ default: 'STUDENT' })
+  role: string;
 
-    @Column({type:"timestamptz"})
-    created_at:Date
+  @Column({ default: false })
+  is_suspended: boolean;
 
-    @Column({type:"timestamptz"})
-    updated_at:Date
+  @Column({ default: false })
+  is_verified: boolean;
 
-  
+  @Column({ type: 'timestamptz' })
+  created_at: Date;
+
+  @Column({ type: 'timestamptz' })
+  updated_at: Date;
 }

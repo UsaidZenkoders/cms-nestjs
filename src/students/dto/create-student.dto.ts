@@ -3,10 +3,9 @@ import {
   IsNotEmpty,
   IsInt,
   IsEmail,
-  IsStrongPassword,
   IsUrl,
   IsBoolean,
-  IsPhoneNumber,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateStudentDto {
@@ -40,7 +39,7 @@ export class CreateStudentDto {
   @IsInt()
   age: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUrl({ allow_underscores: true })
   img: string;
 }

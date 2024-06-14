@@ -8,6 +8,7 @@ import { TeachersModule } from './teachers/teachers.module';
 import { AuthModule } from './auth/auth.module';
 import { Student } from './students/entities/student.entity';
 import { Teacher } from './teachers/entities/teacher.entity';
+import { Admin } from './admin/entities/admin.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { Teacher } from './teachers/entities/teacher.entity';
       username: 'postgres',
       password: 'usaid12.zenkoders',
       database: 'cms',
-      entities: [Student, Teacher],
+      entities: [Student, Teacher, Admin],
       synchronize: true,
     }),
     StudentsModule,

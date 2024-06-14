@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { Student } from 'src/students/entities/student.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { CreateTeacherDto } from 'src/teachers/dto/create-teacher.dto';
+import { Admin } from 'src/admin/entities/admin.entity';
+import { CreateAdminDto } from 'src/admin/dto/create-admin.dto';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +15,8 @@ export class AuthService {
     private StudentsRepository: Repository<Student>,
     @InjectRepository(Teacher)
     private TeachersRepository: Repository<Teacher>,
+    @InjectRepository(Admin)
+    private AdminRepository: Repository<Admin>,
   ) {}
   async studentSignUp(createStudentDto: CreateStudentDto) {
     try {
@@ -56,6 +60,26 @@ export class AuthService {
       });
       this.TeachersRepository.save(teacher);
       return teacher;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async adminSignup(createAdminDto: CreateAdminDto) {
+    try {
+      const alreadyExist = await this.AdminRepository.findOneBy({
+        email: createAdminDto.email,
+      });
+      console.log(alreadyExist);
+      if (alreadyExist) {
+        throw new HttpException('Admin already exists', HttpStatus.BAD_REQUEST);
+      }
+      const admin = this.AdminRepository.create({
+        ...createAdminDto,
+        created_at: new Date(Date.now()),
+        updated_at: new Date(Date.now()),
+      });
+      this.AdminRepository.save(admin);
+      return admin;
     } catch (error) {
       console.log(error);
     }
