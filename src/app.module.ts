@@ -21,6 +21,7 @@ import { Admin } from './admin/entities/admin.entity';
       database: 'cms',
       entities: [Student, Teacher, Admin],
       synchronize: true,
+      logging: true,
     }),
     StudentsModule,
     AdminModule,

@@ -27,6 +27,7 @@ export class AuthController {
           cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
         },
       }),
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB file size limit
     }),
   )
   @Post('/student')
