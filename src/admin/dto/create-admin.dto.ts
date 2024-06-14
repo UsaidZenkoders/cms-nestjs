@@ -22,6 +22,8 @@ export class CreateAdminDto {
   @IsBoolean()
   is_verified: boolean = false;
 
+  role:string="ADMIN"
+
   @IsNotEmpty()
   @IsUrl({ allow_underscores: true })
   img: string;

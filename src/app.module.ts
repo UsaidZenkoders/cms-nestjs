@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { Student } from './students/entities/student.entity';
 import { Teacher } from './teachers/entities/teacher.entity';
 import { Admin } from './admin/entities/admin.entity';
+import { WhitelistModule } from './whitelist/whitelist.module';
+import { whitelist } from './whitelist/entities/whitelist.entity';
 
 @Module({
   imports: [
@@ -19,14 +21,14 @@ import { Admin } from './admin/entities/admin.entity';
       username: 'postgres',
       password: 'usaid12.zenkoders',
       database: 'cms',
-      entities: [Student, Teacher, Admin],
+      entities: [Student, Teacher, Admin,whitelist],
       synchronize: true,
-      logging: true,
     }),
     StudentsModule,
     AdminModule,
     TeachersModule,
     AuthModule,
+    WhitelistModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -14,7 +14,7 @@ export class Student {
   address: string;
 
   @Column()
-  age: number;
+  age: string;
 
   @Column()
   contact: string;

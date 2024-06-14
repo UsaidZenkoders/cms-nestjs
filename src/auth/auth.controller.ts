@@ -14,23 +14,28 @@ import { CreateAdminDto } from 'src/admin/dto/create-admin.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { LoginStudentDto } from 'src/students/dto/login-student.dto';
+import { UseGuards } from '@nestjs/common';
+import { whitelistGuard } from 'src/guards/whitelist.guard';
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+  @UseGuards(whitelistGuard)
+  @Post('/student/register')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
-          const uniqueSuffix =
+          const urlGenerator =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+          cb(null, `${urlGenerator}${extname(file.originalname)}`);
         },
       }),
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB file size limit
+      limits: { fileSize: 50 * 1024 * 1024 },
     }),
   )
-  @Post('/student')
   createStudent(
     @Body(ValidationPipe)
     createStudentDto: CreateStudentDto,
@@ -44,6 +49,14 @@ export class AuthController {
     return this.authService.studentSignUp(createStudentDto);
   }
 
+  @Post("/student/login")
+  loginStudent(
+    @Body(ValidationPipe)
+    loginStudentDto:LoginStudentDto
+  ){
+    return this.authService.studentLogin(loginStudentDto)
+  }
+
   @Post('/teacher')
   createTeacher(
     @Body(ValidationPipe)
@@ -52,7 +65,21 @@ export class AuthController {
     return this.authService.teacherSignup(createTeacherDto);
   }
 
+  @UseGuards(whitelistGuard)
   @Post('/admin')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const urlGenerator =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${urlGenerator}${extname(file.originalname)}`);
+        },
+      }),
+      limits: { fileSize: 50 * 1024 * 1024 },
+    }),
+  )
   createAdmin(@Body(ValidationPipe) createAdminDto: CreateAdminDto) {
     return this.authService.adminSignup(createAdminDto);
   }

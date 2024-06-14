@@ -35,9 +35,10 @@ export class CreateStudentDto {
   @IsBoolean()
   is_verified: boolean = false;
 
+  role: string = 'STUDENT';
+
   @IsNotEmpty()
-  @IsInt()
-  age: number;
+  age: string;
 
   @IsOptional()
   @IsUrl({ allow_underscores: true })
