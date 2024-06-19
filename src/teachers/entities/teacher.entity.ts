@@ -20,7 +20,7 @@ export class Teacher {
   contact: string;
 
   @Column()
-  img: string;
+  img: string = null;
 
   @Column({ default: 'TEACHER' })
   role: string;

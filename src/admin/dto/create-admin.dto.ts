@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsUrl,
   IsBoolean,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateAdminDto {
@@ -22,9 +23,9 @@ export class CreateAdminDto {
   @IsBoolean()
   is_verified: boolean = false;
 
-  role:string="ADMIN"
+  role: string = 'ADMIN';
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUrl({ allow_underscores: true })
   img: string;
 }

@@ -11,7 +11,14 @@ import { Teacher } from './teachers/entities/teacher.entity';
 import { Admin } from './admin/entities/admin.entity';
 import { WhitelistModule } from './whitelist/whitelist.module';
 import { whitelist } from './whitelist/entities/whitelist.entity';
-
+import { CoursesModule } from './courses/courses.module';
+import { Course } from './courses/entities/course.entity';
+import { ImageUploadModule } from './image-upload/image-upload.module';
+import { BcryptService } from './bcrypt/bcrypt.service';
+import { OtpModule } from './otp/otp.module';
+import { MailModule } from './mail/mail.module';
+import { Otp } from './otp/entities/otp.entity';
+import { Emails } from './emails/entity/emails.entity';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -21,16 +28,21 @@ import { whitelist } from './whitelist/entities/whitelist.entity';
       username: 'postgres',
       password: 'usaid12.zenkoders',
       database: 'cms',
-      entities: [Student, Teacher, Admin,whitelist],
+      entities: [Student, Teacher, Admin, whitelist, Course, Otp, Emails],
       synchronize: true,
     }),
+
     StudentsModule,
     AdminModule,
     TeachersModule,
     AuthModule,
     WhitelistModule,
+    CoursesModule,
+    ImageUploadModule,
+    OtpModule,
+    MailModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, BcryptService],
 })
 export class AppModule {}

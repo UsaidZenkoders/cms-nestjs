@@ -1,18 +1,4 @@
-import { Body, Controller,Post, ValidationPipe } from '@nestjs/common';
-import { WhitelistService } from './whitelist.service';
-import { CreateWhiteListDto } from './dto/create-whitelist.dto';
+import { Controller } from '@nestjs/common';
 
 @Controller('whitelist')
-export class WhitelistController {
-    constructor(private readonly whitelistService:WhitelistService){}
-    
-    @Post("/addwhitelist")
-    Add(
-        @Body(
-            ValidationPipe)
-            createWhiteListDto:CreateWhiteListDto
-    ){
-        return this.whitelistService.create(createWhiteListDto)
-    }
-    
-}
+export class WhitelistController {}

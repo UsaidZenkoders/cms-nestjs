@@ -10,7 +10,7 @@ export class Admin {
   password: string;
   @Column({ default: 'ADMIN' })
   role: string;
-  @Column()
+  @Column({ default: null })
   img: string;
   @Column()
   is_verified: boolean = false;

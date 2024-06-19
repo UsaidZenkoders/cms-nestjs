@@ -15,13 +15,12 @@ export class WhitelistService {
       const alreadyExist = await this.whitelistRepository.findOneBy({
         domain: createWhiteListDto.domain,
       });
-      console.log(alreadyExist)
+      console.log(alreadyExist);
       if (alreadyExist) {
         return {
-            message: 'domain already exist',
-            status: HttpStatus.OK,
-          };
-       
+          message: 'domain already exist',
+          status: HttpStatus.OK,
+        };
       }
       const domain = this.whitelistRepository.create(createWhiteListDto);
       this.whitelistRepository.save(domain);
@@ -30,12 +29,23 @@ export class WhitelistService {
         domain: domain,
         status: HttpStatus.OK,
       };
-     
     } catch (error) {
       return {
         message: 'An error occured',
         status: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
+  }
+  async validateDomain(email: string): Promise<boolean> {
+    const domain = email.split('@')[1];
+    console.log('Domain:', domain);
+
+    const foundDomain = await this.whitelistRepository.findOne({
+      where: { domain },
+    });
+    console.log('Result found domain:', foundDomain);
+    console.log('Result !!Found Domain:', !!foundDomain);
+
+    return !!foundDomain;
   }
 }

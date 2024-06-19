@@ -19,7 +19,7 @@ export class Student {
   @Column()
   contact: string;
 
-  @Column()
+  @Column({ default: null })
   img: string;
 
   @Column({ default: 'STUDENT' })

@@ -3,84 +3,113 @@ import {
   Post,
   Body,
   ValidationPipe,
-  UseInterceptors,
-  BadRequestException,
+  UseGuards,
   UploadedFile,
+  UseInterceptors,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateStudentDto } from 'src/students/dto/create-student.dto';
 import { CreateTeacherDto } from 'src/teachers/dto/create-teacher.dto';
 import { CreateAdminDto } from 'src/admin/dto/create-admin.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { LoginStudentDto } from 'src/students/dto/login-student.dto';
-import { UseGuards } from '@nestjs/common';
-import { whitelistGuard } from 'src/guards/whitelist.guard';
+import { AuthenticationGuard } from 'src/guards/authentication.guard';
+import { LoginTeacherDto } from 'src/teachers/dto/login-teacher.dto';
+import { LoginAdminDto } from 'src/admin/dto/login-admin.dto';
+import { Roles } from 'src/decorators/role.decorator';
+import { Role } from 'src/enum/role.enum';
+import { VerifyOtpDto } from 'src/otp/dto/verify-otp.dto';
+// import { whitelistingGuard } from 'src/guards/whitelisting.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
-  @UseGuards(whitelistGuard)
+
+  // STUDENT AUTH ROUTES
+
   @Post('/student/register')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const urlGenerator =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${urlGenerator}${extname(file.originalname)}`);
-        },
-      }),
-      limits: { fileSize: 50 * 1024 * 1024 },
-    }),
-  )
-  createStudent(
-    @Body(ValidationPipe)
-    createStudentDto: CreateStudentDto,
-    @UploadedFile() file: Express.Multer.File,
+  // @UseGuards(whitelistingGuard)
+  @UseInterceptors(FileInterceptor('image'))
+  async createStudent(
+    @Body(ValidationPipe) createStudentDto: CreateStudentDto,
+    @UploadedFile() image: Express.Multer.File,
   ) {
-    if (!file) {
-      throw new BadRequestException('Image file is required');
-    }
-    createStudentDto.img = `http://localhost:3000/uploads/${file.filename}`;
+    console.log('Uploaded File:', image); // Log the uploaded file
+    console.log(createStudentDto);
 
-    return this.authService.studentSignUp(createStudentDto);
+    return await this.authService.studentSignUp(createStudentDto, image);
   }
 
-  @Post("/student/login")
-  loginStudent(
+  @Post('/student/register/verify-otp')
+  async verifyOtpForStudent(
     @Body(ValidationPipe)
-    loginStudentDto:LoginStudentDto
-  ){
-    return this.authService.studentLogin(loginStudentDto)
-  }
-
-  @Post('/teacher')
-  createTeacher(
-    @Body(ValidationPipe)
-    createTeacherDto: CreateTeacherDto,
+    verifyOtpDto: VerifyOtpDto,
   ) {
-    return this.authService.teacherSignup(createTeacherDto);
+    return await this.authService.studentOtpVerification(verifyOtpDto);
   }
 
-  @UseGuards(whitelistGuard)
-  @Post('/admin')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const urlGenerator =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${urlGenerator}${extname(file.originalname)}`);
-        },
-      }),
-      limits: { fileSize: 50 * 1024 * 1024 },
-    }),
-  )
-  createAdmin(@Body(ValidationPipe) createAdminDto: CreateAdminDto) {
-    return this.authService.adminSignup(createAdminDto);
+  @Post('/student/login')
+  @Roles(Role.student)
+  @UseGuards(AuthenticationGuard)
+  @HttpCode(HttpStatus.OK)
+  async loginStudent(@Body(ValidationPipe) loginStudentDto: LoginStudentDto) {
+    return await this.authService.studentLogin(loginStudentDto);
+  }
+
+  // ADMIN AUTH  ROUTES
+
+  @Post('/admin/register')
+  // @UseGuards(whitelistingGuard)
+  @UseInterceptors(FileInterceptor('image'))
+  // @UseGuards(whitelistingGuard)
+  async createAdmin(
+    @Body(ValidationPipe) createAdminDto: CreateAdminDto,
+    @UploadedFile() image: Express.Multer.File,
+  ) {
+    return await this.authService.adminSignup(createAdminDto, image);
+  }
+
+  @Post('/admin/register/verify-otp')
+  async verifyOtpForAdmin(
+    @Body(ValidationPipe)
+    verifyOtpDto: VerifyOtpDto,
+  ) {
+    return await this.authService.adminOtpVerification(verifyOtpDto);
+  }
+
+  @Post('/admin/login')
+  @Roles(Role.admin)
+  @HttpCode(HttpStatus.OK)
+  async loginAdmin(@Body(ValidationPipe) loginAdminDto: LoginAdminDto) {
+    return await this.authService.adminLogin(loginAdminDto);
+  }
+
+  // TEACHER AUTH ROUTES
+
+  @Post('/teacher/register')
+  // @UseGuards(whitelistingGuard)
+  @UseInterceptors(FileInterceptor('image'))
+  async createTeacher(
+    @Body(ValidationPipe) createTeacherDto: CreateTeacherDto,
+    @UploadedFile() image: Express.Multer.File,
+  ) {
+    return this.authService.teacherSignup(createTeacherDto, image);
+  }
+
+  @Post('/admin/register/verify-otp')
+  async verifyOtpForTeacher(
+    @Body(ValidationPipe)
+    verifyOtpDto: VerifyOtpDto,
+  ) {
+    return await this.authService.teacherOtpVerification(verifyOtpDto);
+  }
+
+  @Post('/teacher/login')
+  @Roles(Role.teacher)
+  @HttpCode(HttpStatus.OK)
+  async loginTeacher(@Body(ValidationPipe) loginTeacherDto: LoginTeacherDto) {
+    return await this.authService.teacherLogin(loginTeacherDto);
   }
 }

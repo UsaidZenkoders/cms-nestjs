@@ -1,4 +1,10 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateStudentDto } from 'src/students/dto/create-student.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,9 +13,16 @@ import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { CreateTeacherDto } from 'src/teachers/dto/create-teacher.dto';
 import { Admin } from 'src/admin/entities/admin.entity';
 import { CreateAdminDto } from 'src/admin/dto/create-admin.dto';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginStudentDto } from 'src/students/dto/login-student.dto';
+import { LoginTeacherDto } from 'src/teachers/dto/login-teacher.dto';
+import { LoginAdminDto } from 'src/admin/dto/login-admin.dto';
+import { ImageUploadService } from 'src/image-upload/image-upload.service';
+import { BcryptService } from 'src/bcrypt/bcrypt.service';
+import { OtpService } from 'src/otp/otp.service';
+import { VerifyOtpDto } from 'src/otp/dto/verify-otp.dto';
+import { EmailsService } from 'src/emails/emails.service';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -20,141 +33,231 @@ export class AuthService {
     @InjectRepository(Admin)
     private AdminRepository: Repository<Admin>,
     private jwtService: JwtService,
+    private imageUploadService: ImageUploadService,
+    private bcryptService: BcryptService,
+    private otpService: OtpService,
+    private EmailService: EmailsService,
   ) {}
-  async studentSignUp(createStudentDto: CreateStudentDto) {
+  async studentSignUp(
+    createStudentDto: CreateStudentDto,
+    image: Express.Multer.File,
+  ) {
     try {
-      const alreadyExist = await this.StudentsRepository.findOneBy({
-        email: createStudentDto.email,
-      });
+      const alreadyExist = await this.EmailService.getEmails(
+        createStudentDto.email,
+      );
       if (alreadyExist) {
-        return {
-          message: 'Student already exists',
-          status: HttpStatus.CONFLICT,
-        };
-      } else {
-        const { password } = createStudentDto;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const payload = {
-          email: createStudentDto.email,
-          role: createStudentDto.role,
-        };
-        const token = this.jwtService.sign(payload);
-        const student = this.StudentsRepository.create({
-          ...createStudentDto,
-          password: hashedPassword,
-          created_at: new Date(Date.now()),
-          updated_at: new Date(Date.now()),
-        });
-        this.StudentsRepository.save(student);
-
-        return {
-          message: 'Student created successfully',
-          access_token: token,
-          student: createStudentDto,
-          status: HttpStatus.CREATED,
-        };
+        throw new ConflictException('Email has already been taken');
       }
+      const imageUrl = await this.imageUploadService.uploadImage(image);
+
+      const { password } = createStudentDto;
+      const hashedPassword = await this.bcryptService.hash(password, 10);
+      const otp = await this.otpService.generateOtpforStudent(
+        createStudentDto.email,
+      );
+      this.EmailService.createEmail(
+        createStudentDto.email,
+        createStudentDto.role,
+      );
+      const student = this.StudentsRepository.create({
+        ...createStudentDto,
+        password: hashedPassword,
+        img: imageUrl,
+        created_at: new Date(),
+        updated_at: new Date(),
+        is_verified: false,
+      });
+      await this.StudentsRepository.save(student);
+      return {
+        message: 'Otp sent to email. Please verify to complete registration',
+        otpSent: true,
+      };
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
+      throw new InternalServerErrorException(error.message);
     }
   }
+  async studentOtpVerification(verifyOtpDto: VerifyOtpDto) {
+    return this.otpService.verifyOtpforStudent(verifyOtpDto);
+  }
 
-  async teacherSignup(createTeacherDto: CreateTeacherDto) {
+  async teacherSignup(
+    createTeacherDto: CreateTeacherDto,
+    image: Express.Multer.File,
+  ) {
     try {
-      const alreadyExist = await this.TeachersRepository.findOneBy({
-        email: createTeacherDto.email,
-      });
+      const alreadyExist = await this.EmailService.getEmails(
+        createTeacherDto.email,
+      );
       if (alreadyExist) {
-        return {
-          message: 'Teacher already exists',
-          status: HttpStatus.CONFLICT,
-        };
+        throw new ConflictException('Email has already been taken');
       }
+      const imageUrl = await this.imageUploadService.uploadImage(image);
+
       const { password } = createTeacherDto;
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const payload = {
-        email: createTeacherDto.email,
-        role: createTeacherDto.role,
-      };
-      const token = this.jwtService.sign(payload);
+      const hashedPassword = await this.bcryptService.hash(password, 10);
+      const otp = await this.otpService.generateOtpForTeacher(
+        createTeacherDto.email,
+      );
+      this.EmailService.createEmail(
+        createTeacherDto.email,
+        createTeacherDto.role,
+      );
       const teacher = this.TeachersRepository.create({
         ...createTeacherDto,
         password: hashedPassword,
-        created_at: new Date(Date.now()),
-        updated_at: new Date(Date.now()),
+        img: imageUrl,
+        created_at: new Date(),
+        updated_at: new Date(),
+        is_verified: false,
       });
-      this.TeachersRepository.save(teacher);
+      await this.TeachersRepository.save(teacher);
       return {
-        message: 'Teacher created successfully',
-        access_token: token,
-        teacher: createTeacherDto,
-        status: HttpStatus.CREATED,
+        message: 'Otp sent to email. Please verify to complete registration',
+        otpSent: true,
       };
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
+      throw new InternalServerErrorException(error.message);
     }
   }
-
-  async adminSignup(createAdminDto: CreateAdminDto) {
+  async teacherOtpVerification(verifyOtpDto: VerifyOtpDto) {
+    return this.otpService.verifyOtpForTeacher(verifyOtpDto);
+  }
+  async adminSignup(
+    createAdminDto: CreateAdminDto,
+    image: Express.Multer.File,
+  ) {
     try {
-      const alreadyExist = await this.AdminRepository.findOneBy({
-        email: createAdminDto.email,
-      });
+      const alreadyExist = await this.EmailService.getEmails(
+        createAdminDto.email,
+      );
       if (alreadyExist) {
-        return {
-          message: 'Admin already exists',
-          status: HttpStatus.BAD_REQUEST,
-        };
+        throw new ConflictException('Email has already been taken');
       }
+      const imageUrl = await this.imageUploadService.uploadImage(image);
+
+      const { password } = createAdminDto;
+      const hashedPassword = await this.bcryptService.hash(password, 10);
+      const otp = await this.otpService.generateOtpForAdmin(
+        createAdminDto.email,
+      );
+      this.EmailService.createEmail(createAdminDto.email, createAdminDto.role);
       const admin = this.AdminRepository.create({
         ...createAdminDto,
-        created_at: new Date(Date.now()),
-        updated_at: new Date(Date.now()),
+        password: hashedPassword,
+        img: imageUrl,
+        created_at: new Date(),
+        updated_at: new Date(),
+        is_verified: false,
       });
-      const payload = {
-        email: createAdminDto.email,
-        role: createAdminDto.role,
-      };
-      const token = this.jwtService.sign(payload);
-      this.AdminRepository.save(admin);
+      await this.AdminRepository.save(admin);
       return {
-        message: 'Admin created successfully',
-        access_token: token,
-        admin: createAdminDto,
-        status: HttpStatus.CREATED,
+        message: 'Otp sent to email. Please verify to complete registration',
+        otpSent: true,
       };
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
+      throw new InternalServerErrorException(error.message);
     }
   }
+  async adminOtpVerification(verifyOtpDto: VerifyOtpDto) {
+    return this.otpService.verifyOtpForAdmin(verifyOtpDto);
+  }
+
   async studentLogin(loginStudentDto: LoginStudentDto) {
     const userwithEmail = await this.StudentsRepository.findOneBy({
       email: loginStudentDto.email,
     });
-
-    if (userwithEmail) {
+    if (!userwithEmail) {
+      throw new UnauthorizedException('Student with this email doesnot exist');
+    }
+    if (userwithEmail && userwithEmail.is_verified) {
       const { password } = loginStudentDto;
-      const dbPass = (await userwithEmail).password;
-      const matchedPassword = bcrypt.compare(password, dbPass);
+      const dbPass = userwithEmail.password;
+      const matchedPassword = await this.bcryptService.compare(
+        password,
+        dbPass,
+      );
       if (matchedPassword) {
         const payload = {
           email: loginStudentDto.email,
-          role: loginStudentDto.role,
+          role: userwithEmail.role,
         };
+        console.log(payload);
         const token = this.jwtService.sign(payload);
         return {
           message: 'Login successful',
           access_token: token,
         };
       }
-      return {
-        message: 'Invalid credentials ',
-        status: HttpStatus.UNAUTHORIZED,
-      };
+      throw new UnauthorizedException('Invalid Credentials');
     }
-    return {
-      message: 'Invalid credentials ',
-      status: HttpStatus.UNAUTHORIZED,
-    };
+
+    throw new UnauthorizedException('Student is not verified');
+  }
+
+  async teacherLogin(loginTeacherDto: LoginTeacherDto) {
+    const userwithEmail = await this.TeachersRepository.findOneBy({
+      email: loginTeacherDto.email,
+    });
+    if (!userwithEmail) {
+      throw new UnauthorizedException('Teacher with this email doesnot exist');
+    }
+    if (userwithEmail && userwithEmail.is_verified) {
+      const { password } = loginTeacherDto;
+      const dbPass = userwithEmail.password;
+      const matchedPassword = await this.bcryptService.compare(
+        password,
+        dbPass,
+      );
+      if (matchedPassword) {
+        const payload = {
+          email: loginTeacherDto.email,
+          role: userwithEmail.role,
+        };
+        console.log(payload);
+        const token = this.jwtService.sign(payload);
+        return {
+          message: 'Login successful',
+          access_token: token,
+        };
+      }
+      throw new UnauthorizedException('Invalid Credentials');
+    }
+
+    throw new UnauthorizedException('Teacher is not verified');
+  }
+  async adminLogin(loginAdminDto: LoginAdminDto) {
+    const userwithEmail = await this.AdminRepository.findOneBy({
+      email: loginAdminDto.email,
+    });
+    if (!userwithEmail) {
+      throw new UnauthorizedException('Admin with this email doesnot exist');
+    }
+    if (userwithEmail && userwithEmail.is_verified) {
+      const { password } = loginAdminDto;
+      const dbPass = userwithEmail.password;
+      const matchedPassword = await this.bcryptService.compare(
+        password,
+        dbPass,
+      );
+      if (matchedPassword) {
+        const payload = {
+          email: loginAdminDto.email,
+          role: userwithEmail.role,
+        };
+        console.log(payload);
+        const token = this.jwtService.sign(payload);
+        return {
+          message: 'Login successful',
+          access_token: token,
+        };
+      }
+      throw new UnauthorizedException('Invalid Credentials');
+    }
+
+    throw new UnauthorizedException('Admin is not verified');
   }
 }

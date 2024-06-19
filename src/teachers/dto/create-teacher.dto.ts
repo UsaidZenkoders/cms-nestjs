@@ -1,10 +1,10 @@
 import {
   IsString,
   IsNotEmpty,
-  IsInt,
   IsEmail,
   IsUrl,
   IsBoolean,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateTeacherDto {
@@ -31,7 +31,7 @@ export class CreateTeacherDto {
   @IsString()
   contact: string;
 
-  role:string="TEACHER"
+  role: string = 'TEACHER';
 
   @IsBoolean()
   is_verified: boolean = false;
@@ -39,7 +39,7 @@ export class CreateTeacherDto {
   @IsNotEmpty()
   age: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUrl({ allow_underscores: true })
   img: string;
 }
