@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -22,6 +23,8 @@ import { BcryptService } from 'src/bcrypt/bcrypt.service';
 import { OtpService } from 'src/otp/otp.service';
 import { VerifyOtpDto } from 'src/otp/dto/verify-otp.dto';
 import { EmailsService } from 'src/emails/emails.service';
+import { WhitelistService } from 'src/whitelist/whitelist.service';
+import { Role } from 'src/enum/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +40,7 @@ export class AuthService {
     private bcryptService: BcryptService,
     private otpService: OtpService,
     private EmailService: EmailsService,
+    private whitelistService: WhitelistService,
   ) {}
   async studentSignUp(
     createStudentDto: CreateStudentDto,
@@ -49,6 +53,13 @@ export class AuthService {
       if (alreadyExist) {
         throw new ConflictException('Email has already been taken');
       }
+      const allowedDomain = await this.whitelistService.validateDomain(
+        createStudentDto.email,
+      );
+      if (!allowedDomain) {
+        throw new Error('This domain is not allowed');
+      }
+
       const imageUrl = await this.imageUploadService.uploadImage(image);
 
       const { password } = createStudentDto;
@@ -56,10 +67,7 @@ export class AuthService {
       const otp = await this.otpService.generateOtpforStudent(
         createStudentDto.email,
       );
-      this.EmailService.createEmail(
-        createStudentDto.email,
-        createStudentDto.role,
-      );
+      this.EmailService.createEmail(createStudentDto.email, 'STUDENT');
       const student = this.StudentsRepository.create({
         ...createStudentDto,
         password: hashedPassword,
@@ -75,7 +83,7 @@ export class AuthService {
       };
     } catch (error) {
       console.log(error.message);
-      throw new InternalServerErrorException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
   async studentOtpVerification(verifyOtpDto: VerifyOtpDto) {
@@ -93,6 +101,12 @@ export class AuthService {
       if (alreadyExist) {
         throw new ConflictException('Email has already been taken');
       }
+      const allowedDomain = await this.whitelistService.validateDomain(
+        createTeacherDto.email,
+      );
+      if (!allowedDomain) {
+        throw new Error('This domain is not allowed');
+      }
       const imageUrl = await this.imageUploadService.uploadImage(image);
 
       const { password } = createTeacherDto;
@@ -100,10 +114,7 @@ export class AuthService {
       const otp = await this.otpService.generateOtpForTeacher(
         createTeacherDto.email,
       );
-      this.EmailService.createEmail(
-        createTeacherDto.email,
-        createTeacherDto.role,
-      );
+      this.EmailService.createEmail(createTeacherDto.email, 'TEACHER');
       const teacher = this.TeachersRepository.create({
         ...createTeacherDto,
         password: hashedPassword,
@@ -119,11 +130,11 @@ export class AuthService {
       };
     } catch (error) {
       console.log(error.message);
-      throw new InternalServerErrorException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
   async teacherOtpVerification(verifyOtpDto: VerifyOtpDto) {
-    return this.otpService.verifyOtpForTeacher(verifyOtpDto);
+    return this.otpService.verifyOtpforTeacher(verifyOtpDto);
   }
   async adminSignup(
     createAdminDto: CreateAdminDto,
@@ -134,7 +145,13 @@ export class AuthService {
         createAdminDto.email,
       );
       if (alreadyExist) {
-        throw new ConflictException('Email has already been taken');
+        throw new BadRequestException('Email has already been taken');
+      }
+      const allowedDomain = await this.whitelistService.validateDomain(
+        createAdminDto.email,
+      );
+      if (!allowedDomain) {
+        throw new Error('This domain is not allowed');
       }
       const imageUrl = await this.imageUploadService.uploadImage(image);
 
@@ -143,7 +160,7 @@ export class AuthService {
       const otp = await this.otpService.generateOtpForAdmin(
         createAdminDto.email,
       );
-      this.EmailService.createEmail(createAdminDto.email, createAdminDto.role);
+      this.EmailService.createEmail(createAdminDto.email, 'ADMIN');
       const admin = this.AdminRepository.create({
         ...createAdminDto,
         password: hashedPassword,
@@ -159,11 +176,11 @@ export class AuthService {
       };
     } catch (error) {
       console.log(error.message);
-      throw new InternalServerErrorException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
   async adminOtpVerification(verifyOtpDto: VerifyOtpDto) {
-    return this.otpService.verifyOtpForAdmin(verifyOtpDto);
+    return this.otpService.verifyOtpforAdmin(verifyOtpDto);
   }
 
   async studentLogin(loginStudentDto: LoginStudentDto) {

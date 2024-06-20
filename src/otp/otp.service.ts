@@ -15,6 +15,7 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { Admin } from 'src/admin/entities/admin.entity';
+import { Emails } from 'src/emails/entity/emails.entity';
 
 @Injectable()
 export class OtpService {
@@ -23,6 +24,7 @@ export class OtpService {
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
     @InjectRepository(Admin) private AdminRepository: Repository<Admin>,
     @InjectRepository(Otp) private OtpRepository: Repository<Otp>,
+    @InjectRepository(Emails) private EmailRepository: Repository<Emails>,
     private jwtService: JwtService,
     private readonly mailService: MailService,
   ) {}
@@ -43,14 +45,12 @@ export class OtpService {
       const otp = crypto.randomInt(100000, 999999).toString();
       console.log(`Generated OTP for ${email}: ${otp}`);
 
-      const validTill = new Date(Date.now() + 5 * 60 * 1000); // OTP valid time
-
+      const validTill = new Date(Date.now() + 5 * 60 * 1000);
       const newOtp = this.OtpRepository.create({
         user_id: email,
         otp: otp,
         expiresAt: validTill,
         createdAt: new Date(),
-        tries: 0, // Initialize tries to 0
       });
       await this.OtpRepository.save(newOtp);
 
@@ -68,26 +68,26 @@ export class OtpService {
       const otpRecord = await this.OtpRepository.findOne({
         where: { user_id: verifyOtpDto.user_id, otp: verifyOtpDto.otp },
       });
+      const student = await this.StudentRepository.findOne({
+        where: { email: verifyOtpDto.user_id },
+      });
 
       if (!otpRecord) {
         throw new BadRequestException('Invalid OTP');
       }
 
       if (otpRecord.expiresAt < new Date()) {
+        await this.StudentRepository.delete(student.email);
+        await this.EmailRepository.delete(student.email);
         throw new BadRequestException('Expired OTP');
       }
-
-      if (otpRecord.tries >= 3) {
-        throw new BadRequestException('Maximum retries exceeded');
+      if (otpRecord.otp !== verifyOtpDto.otp) {
+        await this.StudentRepository.delete(student.email);
+        await this.EmailRepository.delete(student.email);
+        throw new BadRequestException('Wrong Otp');
       }
 
-      // Increment tries
-      otpRecord.tries += 1;
       await this.OtpRepository.save(otpRecord);
-
-      const student = await this.StudentRepository.findOne({
-        where: { email: verifyOtpDto.user_id },
-      });
 
       if (!student) {
         throw new NotFoundException('Student not found');
@@ -118,9 +118,9 @@ export class OtpService {
 
   async generateOtpForTeacher(email: string): Promise<string> {
     try {
-      const existingStudent = await this.StudentRepository.findOneBy({ email });
-      if (existingStudent && existingStudent.is_verified) {
-        throw new BadRequestException('Student with this email already exists');
+      const existingTeacher = await this.TeacherRepository.findOneBy({ email });
+      if (existingTeacher && existingTeacher.is_verified) {
+        throw new BadRequestException('Teacher with this email already exists');
       }
 
       const existingOtp = await this.OtpRepository.findOneBy({
@@ -133,14 +133,13 @@ export class OtpService {
       const otp = crypto.randomInt(100000, 999999).toString();
       console.log(`Generated OTP for ${email}: ${otp}`);
 
-      const validTill = new Date(Date.now() + 5 * 60 * 1000); // OTP valid time
+      const validTill = new Date(Date.now() + 5 * 60 * 1000);
 
       const newOtp = this.OtpRepository.create({
         user_id: email,
         otp: otp,
         expiresAt: validTill,
         createdAt: new Date(),
-        tries: 0,
       });
       await this.OtpRepository.save(newOtp);
 
@@ -152,17 +151,11 @@ export class OtpService {
       throw new InternalServerErrorException('Error generating OTP');
     }
   }
-  async verifyOtpForTeacher(verifyOtpDto: VerifyOtpDto) {
+  async verifyOtpforTeacher(verifyOtpDto: VerifyOtpDto) {
     try {
       const otpRecord = await this.OtpRepository.findOne({
         where: { user_id: verifyOtpDto.user_id, otp: verifyOtpDto.otp },
       });
-      if (otpRecord.expiresAt && otpRecord.expiresAt < new Date()) {
-        throw new BadRequestException('Invalid or expired OTP');
-      } else if (!otpRecord) {
-        throw new BadRequestException('Invalid Credentials');
-      }
-
       const teacher = await this.TeacherRepository.findOne({
         where: { email: verifyOtpDto.user_id },
       });
@@ -170,6 +163,23 @@ export class OtpService {
       if (!teacher) {
         throw new NotFoundException('Teacher not found');
       }
+
+      if (!otpRecord) {
+        throw new BadRequestException('Incorrect Otp');
+      }
+
+      if (otpRecord.expiresAt < new Date()) {
+        await this.TeacherRepository.delete(teacher.email);
+        await this.EmailRepository.delete(teacher.email);
+        throw new BadRequestException('Expired OTP');
+      }
+      // if (otpRecord.otp != verifyOtpDto.otp) {
+      //   await this.TeacherRepository.delete(teacher.email);
+      //   await this.EmailRepository.delete(teacher.email);
+      //   throw new BadRequestException('Wrong Otp');
+      // }
+
+      await this.OtpRepository.save(otpRecord);
 
       teacher.is_verified = true;
       teacher.updated_at = new Date();
@@ -181,17 +191,16 @@ export class OtpService {
       const token = this.jwtService.sign(payload);
 
       return {
-        message: 'Teacher created successfully',
+        message: 'Teacher created and verified successfully',
         access_token: token,
-        student: {
+        teacher: {
           email: teacher.email,
           img: teacher.img,
-          statusCode: HttpStatus.CREATED,
         },
       };
     } catch (error) {
-      console.log(error.message);
-      throw new InternalServerErrorException(error.message);
+      console.error('Error verifying OTP:', error.message);
+      throw new InternalServerErrorException('Error verifying OTP');
     }
   }
 
@@ -214,7 +223,7 @@ export class OtpService {
 
       const otp = crypto.randomInt(100000, 999999).toString();
       console.log(otp);
-      const validTill = new Date(Date.now() + 5 * 60 * 1000); //otp valid time
+      const validTill = new Date(Date.now() + 5 * 60 * 1000);
       console.log(validTill);
       const savedOtp = this.OtpRepository.create({
         user_id: email,
@@ -231,20 +240,31 @@ export class OtpService {
     }
   }
 
-  async verifyOtpForAdmin(verifyOtpDto: VerifyOtpDto) {
+  async verifyOtpforAdmin(verifyOtpDto: VerifyOtpDto) {
     try {
       const otpRecord = await this.OtpRepository.findOne({
         where: { user_id: verifyOtpDto.user_id, otp: verifyOtpDto.otp },
       });
-      if (otpRecord.expiresAt && otpRecord.expiresAt < new Date()) {
-        throw new BadRequestException('Invalid or expired OTP');
-      } else if (!otpRecord) {
-        throw new BadRequestException('Invalid Credentials');
-      }
-
       const admin = await this.AdminRepository.findOne({
         where: { email: verifyOtpDto.user_id },
       });
+
+      if (!otpRecord) {
+        throw new BadRequestException('Invalid OTP');
+      }
+
+      if (otpRecord.expiresAt < new Date()) {
+        await this.AdminRepository.delete(admin.email);
+        await this.EmailRepository.delete(admin.email);
+        throw new BadRequestException('Expired OTP');
+      }
+      if (otpRecord.otp !== verifyOtpDto.otp) {
+        await this.AdminRepository.delete(admin.email);
+        await this.EmailRepository.delete(admin.email);
+        throw new BadRequestException('Wrong Otp');
+      }
+
+      await this.OtpRepository.save(otpRecord);
 
       if (!admin) {
         throw new NotFoundException('Admin not found');
@@ -260,17 +280,16 @@ export class OtpService {
       const token = this.jwtService.sign(payload);
 
       return {
-        message: 'Admin created successfully',
+        message: 'Admin created and verified successfully',
         access_token: token,
-        student: {
+        admin: {
           email: admin.email,
           img: admin.img,
-          statusCode: HttpStatus.CREATED,
         },
       };
     } catch (error) {
-      console.log(error.message);
-      throw new InternalServerErrorException(error.message);
+      console.error('Error verifying OTP:', error.message);
+      throw new InternalServerErrorException('Error verifying OTP');
     }
   }
 }

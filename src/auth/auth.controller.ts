@@ -20,7 +20,6 @@ import { LoginAdminDto } from 'src/admin/dto/login-admin.dto';
 import { Roles } from 'src/decorators/role.decorator';
 import { Role } from 'src/enum/role.enum';
 import { VerifyOtpDto } from 'src/otp/dto/verify-otp.dto';
-// import { whitelistingGuard } from 'src/guards/whitelisting.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
@@ -30,15 +29,11 @@ export class AuthController {
   // STUDENT AUTH ROUTES
 
   @Post('/student/register')
-  // @UseGuards(whitelistingGuard)
   @UseInterceptors(FileInterceptor('image'))
   async createStudent(
     @Body(ValidationPipe) createStudentDto: CreateStudentDto,
     @UploadedFile() image: Express.Multer.File,
   ) {
-    console.log('Uploaded File:', image); // Log the uploaded file
-    console.log(createStudentDto);
-
     return await this.authService.studentSignUp(createStudentDto, image);
   }
 
@@ -61,9 +56,7 @@ export class AuthController {
   // ADMIN AUTH  ROUTES
 
   @Post('/admin/register')
-  // @UseGuards(whitelistingGuard)
   @UseInterceptors(FileInterceptor('image'))
-  // @UseGuards(whitelistingGuard)
   async createAdmin(
     @Body(ValidationPipe) createAdminDto: CreateAdminDto,
     @UploadedFile() image: Express.Multer.File,
@@ -79,6 +72,7 @@ export class AuthController {
     return await this.authService.adminOtpVerification(verifyOtpDto);
   }
 
+
   @Post('/admin/login')
   @Roles(Role.admin)
   @HttpCode(HttpStatus.OK)
@@ -89,7 +83,6 @@ export class AuthController {
   // TEACHER AUTH ROUTES
 
   @Post('/teacher/register')
-  // @UseGuards(whitelistingGuard)
   @UseInterceptors(FileInterceptor('image'))
   async createTeacher(
     @Body(ValidationPipe) createTeacherDto: CreateTeacherDto,
@@ -98,7 +91,7 @@ export class AuthController {
     return this.authService.teacherSignup(createTeacherDto, image);
   }
 
-  @Post('/admin/register/verify-otp')
+  @Post('/teacher/register/verify-otp')
   async verifyOtpForTeacher(
     @Body(ValidationPipe)
     verifyOtpDto: VerifyOtpDto,

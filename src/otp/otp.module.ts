@@ -7,9 +7,10 @@ import { Otp } from './entities/otp.entity';
 import { MailService } from 'src/mail/mail.service';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { Admin } from 'src/admin/entities/admin.entity';
+import { Emails } from 'src/emails/entity/emails.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Student, Otp, Teacher, Admin])],
+  imports: [TypeOrmModule.forFeature([Student, Otp, Teacher, Admin,Emails])],
   controllers: [OtpController],
   providers: [OtpService, MailService],
 })

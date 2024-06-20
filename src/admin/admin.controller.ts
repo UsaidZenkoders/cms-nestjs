@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UseGuards,
   ValidationPipe,
@@ -16,12 +17,13 @@ import { WhitelistService } from 'src/whitelist/whitelist.service';
 
 @UseGuards(AuthenticationGuard, AuthorizationGuard)
 @Controller('admin')
+@Roles(Role.admin)
 export class AdminController {
   constructor(
     private readonly whitelistService: WhitelistService,
     private readonly courseService: CoursesService,
   ) {}
-  @Roles(Role.admin)
+ 
   @Post('/addDomain')
   Add(
     @Body(ValidationPipe)
@@ -35,5 +37,10 @@ export class AdminController {
     createCourseDto: CreateCourseDto,
   ) {
     return this.courseService.create(createCourseDto);
+  }
+
+  @Get("/getCourse")
+  async GetAll(){
+    return await this.courseService.getAllCourses()
   }
 }

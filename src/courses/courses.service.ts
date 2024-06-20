@@ -1,4 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from './entities/course.entity';
 import { Repository } from 'typeorm';
@@ -22,16 +29,21 @@ export class CoursesService {
           status: HttpStatus.CONFLICT,
         };
       }
+      if (new Date(createCourseDto.deadline) < new Date()) {
+        throw new BadRequestException(
+          'Deadline must be greater than current date',
+        );
+      }
       const addedCourse = this.CourseRepository.create({
         ...createCourseDto,
         created_at: new Date(),
         updated_at: new Date(),
       });
-      this.CourseRepository.save(addedCourse);
+      await this.CourseRepository.save(addedCourse);
+
       return {
         message: 'Course Created Successfully',
         course: addedCourse,
-        status: HttpStatus.CREATED,
       };
     } catch (error) {
       return {
@@ -45,65 +57,46 @@ export class CoursesService {
       if (courses.length >= 1) {
         return {
           courses,
-          status: HttpStatus.OK,
         };
       }
-      return {
-        message: 'No course to show',
-        status: HttpStatus.OK,
-      };
+      throw new NotFoundException('No course to show');
     } catch (error) {
-      return {
-        error: error.message,
-      };
+      throw new InternalServerErrorException(error.message);
     }
   }
   async updateCourse(id: string, updateCourseDto: UpdateCourseDto) {
     try {
       const course = await this.CourseRepository.findOneBy({
-        code: updateCourseDto.code,
+        code: id,
       });
-      if (course.code) {
-        return {
-          message: 'Course Updated Successfully',
-          ...this.CourseRepository,
-          updateCourseDto,
-        };
+      if (course) {
+        return this.CourseRepository.save({ ...course, updateCourseDto });
       }
-      return {
-        message: 'Course doesnot exist ',
-      };
+      throw new NotFoundException('Course doesnot exist');
     } catch (error) {
-      return {
-        error: error.message,
-      };
+      throw new BadRequestException(error.message);
     }
   }
   async deleteCourse(id: string) {
     try {
       const courseExist = await this.CourseRepository.findOneBy({ code: id });
       if (courseExist.code) {
-        const removedCourse = this.CourseRepository.delete(courseExist);
-        if ((await removedCourse).affected >= 1) {
+        const removedCourse = await this.CourseRepository.delete(
+          courseExist.code,
+        );
+        if (removedCourse.affected >= 1) {
           return {
             message: 'Course deleted successfully ',
             course: courseExist.code,
             status: HttpStatus.OK,
           };
         }
-        return {
-          message: 'An error occured while deleting',
-        };
+        throw new BadRequestException('An error occured while deleting');
       }
-      return {
-        message: 'Course doesnot exist',
-        status: HttpStatus.NOT_FOUND,
-      };
+
+      throw new BadRequestException('Course doesnot exist');
     } catch (error) {
-      return {
-        error: error.message,
-        status: HttpStatus.CONFLICT,
-      };
+      throw new InternalServerErrorException(error.messsage);
     }
   }
 }

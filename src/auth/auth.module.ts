@@ -16,7 +16,7 @@ import { Otp } from 'src/otp/entities/otp.entity';
 import { MailService } from 'src/mail/mail.service';
 import { EmailsService } from 'src/emails/emails.service';
 import { Emails } from 'src/emails/entity/emails.entity';
-import { whitelistingGuard } from 'src/guards/whitelisting.guard';
+// import { whitelistingGuard } from 'src/guards/whitelisting.guard';
 // import { MulterMiddleware } from 'src/middlewares/multer.middleware';
 @Module({
   imports: [
@@ -28,7 +28,7 @@ import { whitelistingGuard } from 'src/guards/whitelisting.guard';
     }),
   ],
   providers: [
-    whitelistingGuard,
+    // whitelistingGuard,
     AuthService,
     WhitelistService,
     ImageUploadService,

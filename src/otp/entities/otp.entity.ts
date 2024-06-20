@@ -10,10 +10,10 @@ export class Otp {
   otp: string;
   @Column()
   user_id: string;
-  @Column({
-    type: 'enum',
-    enum: OtpUsedFor,
-  })
+  // @Column({
+  //   type: 'enum',
+  //   enum: OtpUsedFor,
+  // })
   //   usedFor: OtpUsedFor;
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
@@ -22,6 +22,4 @@ export class Otp {
     type: 'timestamp',
   })
   expiresAt: Date;
-  @Column({ type: 'int' })
-  tries: number;
 }
