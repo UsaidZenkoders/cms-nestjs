@@ -33,9 +33,8 @@ export class AuthenticationGuard implements CanActivate {
       request.user = decoded;
       return true;
     } catch (error) {
-      console.error('Error in AuthenticationGuard:', error);
       throw new UnauthorizedException(
-        'An error occurred during authentication',
+        "You are not authenticated, login please"
       );
     }
   }

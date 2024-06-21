@@ -51,6 +51,7 @@ export class OtpService {
         otp: otp,
         expiresAt: validTill,
         createdAt: new Date(),
+        tries: 0,
       });
       await this.OtpRepository.save(newOtp);
 
@@ -66,32 +67,36 @@ export class OtpService {
   async verifyOtpforStudent(verifyOtpDto: VerifyOtpDto) {
     try {
       const otpRecord = await this.OtpRepository.findOne({
-        where: { user_id: verifyOtpDto.user_id, otp: verifyOtpDto.otp },
+        where: { user_id: verifyOtpDto.user_id },
       });
       const student = await this.StudentRepository.findOne({
         where: { email: verifyOtpDto.user_id },
       });
+      if (!student) {
+        throw new NotFoundException('Student not found');
+      }
 
       if (!otpRecord) {
         throw new BadRequestException('Invalid OTP');
       }
+      if (otpRecord.tries > 3) {
+        throw new BadRequestException(
+          'You have reached maximum tries, Register again',
+        );
+      }
+      if (otpRecord.otp != verifyOtpDto.otp) {
+        otpRecord.tries += 1;
+        console.log(otpRecord.tries);
+        throw new BadRequestException('Incorrect Otp');
+      }
 
       if (otpRecord.expiresAt < new Date()) {
-        await this.StudentRepository.delete(student.email);
-        await this.EmailRepository.delete(student.email);
-        throw new BadRequestException('Expired OTP');
+        throw new BadRequestException('Expired OTP, Register again');
       }
-      if (otpRecord.otp !== verifyOtpDto.otp) {
-        await this.StudentRepository.delete(student.email);
-        await this.EmailRepository.delete(student.email);
-        throw new BadRequestException('Wrong Otp');
-      }
+      otpRecord.tries += 1;
+      console.log(otpRecord.tries);
 
       await this.OtpRepository.save(otpRecord);
-
-      if (!student) {
-        throw new NotFoundException('Student not found');
-      }
 
       student.is_verified = true;
       student.updated_at = new Date();
@@ -140,6 +145,7 @@ export class OtpService {
         otp: otp,
         expiresAt: validTill,
         createdAt: new Date(),
+        tries: 0,
       });
       await this.OtpRepository.save(newOtp);
 
@@ -167,18 +173,22 @@ export class OtpService {
       if (!otpRecord) {
         throw new BadRequestException('Incorrect Otp');
       }
+      if (otpRecord.tries > 3) {
+        throw new BadRequestException(
+          'You have reached maximum tries, Register again',
+        );
+      }
 
       if (otpRecord.expiresAt < new Date()) {
-        await this.TeacherRepository.delete(teacher.email);
-        await this.EmailRepository.delete(teacher.email);
-        throw new BadRequestException('Expired OTP');
+        throw new BadRequestException('Expired OTP, register again');
       }
-      // if (otpRecord.otp != verifyOtpDto.otp) {
-      //   await this.TeacherRepository.delete(teacher.email);
-      //   await this.EmailRepository.delete(teacher.email);
-      //   throw new BadRequestException('Wrong Otp');
-      // }
+      if (otpRecord.otp != verifyOtpDto.otp) {
+        otpRecord.tries += 1;
+        console.log(otpRecord.tries);
+        throw new BadRequestException('Incorrect Otp');
+      }
 
+      otpRecord.tries += 1;
       await this.OtpRepository.save(otpRecord);
 
       teacher.is_verified = true;
@@ -230,6 +240,7 @@ export class OtpService {
         otp: otp,
         expiresAt: validTill,
         createdAt: new Date(Date.now()),
+        tries: 0,
       });
       this.OtpRepository.save(savedOtp);
       this.mailService.sendMail(email, otp);
@@ -248,27 +259,29 @@ export class OtpService {
       const admin = await this.AdminRepository.findOne({
         where: { email: verifyOtpDto.user_id },
       });
+      if (!admin) {
+        throw new NotFoundException('Admin not found');
+      }
+      if (otpRecord.tries > 3) {
+        throw new BadRequestException(
+          'You have reached maximum tries, Register again',
+        );
+      }
 
       if (!otpRecord) {
         throw new BadRequestException('Invalid OTP');
       }
 
       if (otpRecord.expiresAt < new Date()) {
-        await this.AdminRepository.delete(admin.email);
-        await this.EmailRepository.delete(admin.email);
-        throw new BadRequestException('Expired OTP');
+        throw new BadRequestException('Expired OTP, Register again');
       }
-      if (otpRecord.otp !== verifyOtpDto.otp) {
-        await this.AdminRepository.delete(admin.email);
-        await this.EmailRepository.delete(admin.email);
-        throw new BadRequestException('Wrong Otp');
+      if (otpRecord.otp != verifyOtpDto.otp) {
+        otpRecord.tries += 1;
+        console.log(otpRecord.tries);
+        throw new BadRequestException('Incorrect Otp');
       }
-
+      otpRecord.tries += 1;
       await this.OtpRepository.save(otpRecord);
-
-      if (!admin) {
-        throw new NotFoundException('Admin not found');
-      }
 
       admin.is_verified = true;
       admin.updated_at = new Date();

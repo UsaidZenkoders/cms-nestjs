@@ -11,4 +11,6 @@ export class Emails {
   email: string;
   @Column({ default: null })
   role: string;
+  @Column()
+  is_verified:boolean=false
 }

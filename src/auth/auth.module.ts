@@ -16,6 +16,7 @@ import { Otp } from 'src/otp/entities/otp.entity';
 import { MailService } from 'src/mail/mail.service';
 import { EmailsService } from 'src/emails/emails.service';
 import { Emails } from 'src/emails/entity/emails.entity';
+import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 // import { whitelistingGuard } from 'src/guards/whitelisting.guard';
 // import { MulterMiddleware } from 'src/middlewares/multer.middleware';
 @Module({
@@ -39,14 +40,4 @@ import { Emails } from 'src/emails/entity/emails.entity';
   ],
   controllers: [AuthController],
 })
-export class AuthModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer
-  //     .apply(MulterMiddleware)
-  //     .forRoutes(
-  //       { path: 'auth/student/register', method: RequestMethod.POST },
-  //       { path: 'auth/admin/register', method: RequestMethod.POST },
-  //       { path: 'auth/teacher/register', method: RequestMethod.POST },
-  //     );
-  // }
-}
+export class AuthModule {}

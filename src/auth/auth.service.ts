@@ -47,8 +47,23 @@ export class AuthService {
     image: Express.Multer.File,
   ) {
     try {
+      const existingUnverifiedStudent = await this.StudentsRepository.findOne({
+        where: { email: createStudentDto.email, is_verified: false },
+      });
+
+      if (existingUnverifiedStudent) {
+        const otp = await this.otpService.generateOtpforStudent(
+          createStudentDto.email,
+        );
+        return {
+          message:
+            'A registration with this email is in progress. Please check your email for verification instructions.',
+          otpSent: true,
+        };
+      }
       const alreadyExist = await this.EmailService.getEmails(
         createStudentDto.email,
+        true,
       );
       if (alreadyExist) {
         throw new ConflictException('Email has already been taken');
@@ -95,8 +110,24 @@ export class AuthService {
     image: Express.Multer.File,
   ) {
     try {
+      const existingUnverifiedTeacher = await this.TeachersRepository.findOne({
+        where: { email: createTeacherDto.email, is_verified: false },
+      });
+
+      if (existingUnverifiedTeacher) {
+        const otp = await this.otpService.generateOtpForTeacher(
+          createTeacherDto.email,
+        );
+        return {
+          message:
+            'A registration with this email is in progress. Please check your email for verification instructions.',
+          otpSent: true,
+        };
+      }
+
       const alreadyExist = await this.EmailService.getEmails(
         createTeacherDto.email,
+        true,
       );
       if (alreadyExist) {
         throw new ConflictException('Email has already been taken');
@@ -141,8 +172,24 @@ export class AuthService {
     image: Express.Multer.File,
   ) {
     try {
+      const existingUnverifiedAdmin = await this.AdminRepository.findOne({
+        where: { email: createAdminDto.email, is_verified: false },
+      });
+
+      if (existingUnverifiedAdmin) {
+        const otp = await this.otpService.generateOtpForAdmin(
+          createAdminDto.email,
+        );
+        return {
+          message:
+            'A registration with this email is in progress. Please check your email for verification instructions.',
+          otpSent: true,
+        };
+      }
+
       const alreadyExist = await this.EmailService.getEmails(
         createAdminDto.email,
+        true,
       );
       if (alreadyExist) {
         throw new BadRequestException('Email has already been taken');

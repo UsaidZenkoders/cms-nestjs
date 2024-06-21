@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
+import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 @Entity()
 export class Student {
   @PrimaryColumn()
@@ -36,4 +37,7 @@ export class Student {
 
   @Column({ type: 'timestamptz' })
   updated_at: Date;
+
+  @OneToMany(() => Enrolment, (enrolments) => enrolments.student_id)
+  enrolments: Enrolment;
 }

@@ -22,4 +22,6 @@ export class Otp {
     type: 'timestamp',
   })
   expiresAt: Date;
+  @Column({type:"int"})
+  tries:number
 }

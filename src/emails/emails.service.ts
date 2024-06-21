@@ -15,9 +15,10 @@ export class EmailsService {
     });
     await this.EmailsRepository.save(addedEmail);
   }
-  async getEmails(email: string): Promise<boolean> {
+  async getEmails(email: string,is_verified:boolean): Promise<boolean> {
     const registeredEmail = await this.EmailsRepository.findOneBy({
       email: email,
+      is_verified:is_verified
     });
     if (registeredEmail) {
       return true;

@@ -47,7 +47,7 @@ export class AuthController {
 
   @Post('/student/login')
   @Roles(Role.student)
-  @UseGuards(AuthenticationGuard)
+  // @UseGuards(AuthenticationGuard)
   @HttpCode(HttpStatus.OK)
   async loginStudent(@Body(ValidationPipe) loginStudentDto: LoginStudentDto) {
     return await this.authService.studentLogin(loginStudentDto);

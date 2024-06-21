@@ -6,4 +6,5 @@ export class VerifyOtpDto {
   otp: string;
   @IsEmail()
   user_id: string;
+  
 }

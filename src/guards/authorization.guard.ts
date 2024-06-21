@@ -31,6 +31,6 @@ export class AuthorizationGuard implements CanActivate {
       return true;
     }
 
-    throw new UnauthorizedException('User not allowed');
+    throw new UnauthorizedException('You are not allowed to hit this endpoint');
   }
 }
