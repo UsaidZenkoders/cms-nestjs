@@ -1,5 +1,4 @@
 import {
-  BadGatewayException,
   BadRequestException,
   HttpStatus,
   Injectable,
@@ -11,7 +10,6 @@ import { Course } from './entities/course.entity';
 import { Repository } from 'typeorm';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-import { Student } from 'src/students/entities/student.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 
@@ -31,8 +29,8 @@ export class CoursesService {
       const teacherWithId = await this.TeacherRepository.findOneBy({
         email: createCourseDto.teacher_id,
       });
-      if (!teacherWithId){
-        throw new BadRequestException("Teacher doesnot exist")
+      if (!teacherWithId) {
+        throw new BadRequestException('Teacher doesnot exist');
       }
       if (alreadyExist) {
         return {
@@ -48,7 +46,7 @@ export class CoursesService {
       }
       const addedCourse = this.CourseRepository.create({
         ...createCourseDto,
-        teacher_id:teacherWithId,
+        teacher_id: teacherWithId,
         created_at: new Date(),
         updated_at: new Date(),
       });
@@ -79,8 +77,15 @@ export class CoursesService {
   }
   async updateCourse(id: string, updateCourseDto: UpdateCourseDto) {
     try {
+      const teacherId = await this.TeacherRepository.findOneBy({
+        email: updateCourseDto.teacher_id,
+      });
+      if (!teacherId) {
+        throw new Error('Teacher doesnot exist');
+      }
       const course = await this.CourseRepository.findOneBy({
         code: id,
+        teacher_id: teacherId,
       });
       if (course) {
         return this.CourseRepository.save({ ...course, updateCourseDto });
@@ -90,10 +95,19 @@ export class CoursesService {
       throw new BadRequestException(error.message);
     }
   }
-  async deleteCourse(id: string) {
+  async deleteCourse(id: string, email: string) {
     try {
-      const courseExist = await this.CourseRepository.findOneBy({ code: id });
-      if (courseExist.code) {
+      const teacherId = await this.TeacherRepository.findOneBy({
+        email: email,
+      });
+      if (!teacherId) {
+        throw new Error('Teacher doesnot exist');
+      }
+      const courseExist = await this.CourseRepository.findOneBy({
+        code: id,
+        teacher_id: teacherId,
+      });
+      if (courseExist.code && new Date(courseExist.deadline) > new Date()) {
         const removedCourse = await this.CourseRepository.delete(
           courseExist.code,
         );
@@ -104,7 +118,9 @@ export class CoursesService {
             status: HttpStatus.OK,
           };
         }
-        throw new BadRequestException('An error occured while deleting');
+        throw new BadRequestException(
+          'Either course doesnot exist or the deadline has passed',
+        );
       }
 
       throw new BadRequestException('Course doesnot exist');

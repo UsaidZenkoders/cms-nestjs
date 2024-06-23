@@ -8,11 +8,8 @@ import { Student } from 'src/students/entities/student.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 
 @Module({
-    imports:[TypeOrmModule.forFeature([Enrolment,Course,Student,Teacher])],
-    controllers: [EnrolmentController],
-    providers: [EnrolmentService],
+  imports: [TypeOrmModule.forFeature([Enrolment, Course, Student, Teacher])],
+  controllers: [EnrolmentController],
+  providers: [EnrolmentService],
 })
-
-export class EnrolmentModule {
-    
-}
+export class EnrolmentModule {}

@@ -19,8 +19,6 @@ import { OtpModule } from './otp/otp.module';
 import { MailModule } from './mail/mail.module';
 import { Otp } from './otp/entities/otp.entity';
 import { Emails } from './emails/entity/emails.entity';
-import { EnrolmentService } from './enrolment/enrolment.service';
-import { EnrolmentController } from './enrolment/enrolment.controller';
 import { Enrolment } from './enrolment/entities/enrolment.entity';
 import { EnrolmentModule } from './enrolment/enrolment.module';
 @Module({
@@ -56,7 +54,7 @@ import { EnrolmentModule } from './enrolment/enrolment.module';
     MailModule,
     EnrolmentModule,
   ],
-  controllers: [AppController, EnrolmentController],
+  controllers: [AppController],
   providers: [AppService, BcryptService],
 })
 export class AppModule {}

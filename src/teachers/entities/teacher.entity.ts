@@ -37,6 +37,6 @@ export class Teacher {
 
   @Column({ type: 'timestamptz' })
   updated_at: Date;
-  @OneToMany(() => Course, (courses) => courses.teacher_id)
+  @OneToMany(() => Course, (course) => course.teacher_id)
   courses: Course;
 }

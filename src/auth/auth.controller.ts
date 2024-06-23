@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   ValidationPipe,
-  UseGuards,
   UploadedFile,
   UseInterceptors,
   HttpCode,
@@ -14,7 +13,6 @@ import { CreateStudentDto } from 'src/students/dto/create-student.dto';
 import { CreateTeacherDto } from 'src/teachers/dto/create-teacher.dto';
 import { CreateAdminDto } from 'src/admin/dto/create-admin.dto';
 import { LoginStudentDto } from 'src/students/dto/login-student.dto';
-import { AuthenticationGuard } from 'src/guards/authentication.guard';
 import { LoginTeacherDto } from 'src/teachers/dto/login-teacher.dto';
 import { LoginAdminDto } from 'src/admin/dto/login-admin.dto';
 import { Roles } from 'src/decorators/role.decorator';
@@ -29,6 +27,7 @@ export class AuthController {
   // STUDENT AUTH ROUTES
 
   @Post('/student/register')
+  @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('image'))
   async createStudent(
     @Body(ValidationPipe) createStudentDto: CreateStudentDto,
@@ -57,6 +56,7 @@ export class AuthController {
 
   @Post('/admin/register')
   @UseInterceptors(FileInterceptor('image'))
+  @HttpCode(HttpStatus.OK)
   async createAdmin(
     @Body(ValidationPipe) createAdminDto: CreateAdminDto,
     @UploadedFile() image: Express.Multer.File,
@@ -72,7 +72,6 @@ export class AuthController {
     return await this.authService.adminOtpVerification(verifyOtpDto);
   }
 
-
   @Post('/admin/login')
   @Roles(Role.admin)
   @HttpCode(HttpStatus.OK)
@@ -84,6 +83,7 @@ export class AuthController {
 
   @Post('/teacher/register')
   @UseInterceptors(FileInterceptor('image'))
+  @HttpCode(HttpStatus.OK)
   async createTeacher(
     @Body(ValidationPipe) createTeacherDto: CreateTeacherDto,
     @UploadedFile() image: Express.Multer.File,

@@ -52,9 +52,7 @@ export class AuthService {
       });
 
       if (existingUnverifiedStudent) {
-        const otp = await this.otpService.generateOtpforStudent(
-          createStudentDto.email,
-        );
+        const otp = await this.otpService.generateOtp(createStudentDto.email);
         return {
           message:
             'A registration with this email is in progress. Please check your email for verification instructions.',
@@ -79,9 +77,7 @@ export class AuthService {
 
       const { password } = createStudentDto;
       const hashedPassword = await this.bcryptService.hash(password, 10);
-      const otp = await this.otpService.generateOtpforStudent(
-        createStudentDto.email,
-      );
+      const otp = await this.otpService.generateOtp(createStudentDto.email);
       this.EmailService.createEmail(createStudentDto.email, 'STUDENT');
       const student = this.StudentsRepository.create({
         ...createStudentDto,
@@ -102,7 +98,7 @@ export class AuthService {
     }
   }
   async studentOtpVerification(verifyOtpDto: VerifyOtpDto) {
-    return this.otpService.verifyOtpforStudent(verifyOtpDto);
+    return this.otpService.verifyOtp(verifyOtpDto, 'student');
   }
 
   async teacherSignup(
@@ -115,9 +111,7 @@ export class AuthService {
       });
 
       if (existingUnverifiedTeacher) {
-        const otp = await this.otpService.generateOtpForTeacher(
-          createTeacherDto.email,
-        );
+        const otp = await this.otpService.generateOtp(createTeacherDto.email);
         return {
           message:
             'A registration with this email is in progress. Please check your email for verification instructions.',
@@ -142,9 +136,7 @@ export class AuthService {
 
       const { password } = createTeacherDto;
       const hashedPassword = await this.bcryptService.hash(password, 10);
-      const otp = await this.otpService.generateOtpForTeacher(
-        createTeacherDto.email,
-      );
+      const otp = await this.otpService.generateOtp(createTeacherDto.email);
       this.EmailService.createEmail(createTeacherDto.email, 'TEACHER');
       const teacher = this.TeachersRepository.create({
         ...createTeacherDto,
@@ -165,7 +157,7 @@ export class AuthService {
     }
   }
   async teacherOtpVerification(verifyOtpDto: VerifyOtpDto) {
-    return this.otpService.verifyOtpforTeacher(verifyOtpDto);
+    return this.otpService.verifyOtp(verifyOtpDto, 'teacher');
   }
   async adminSignup(
     createAdminDto: CreateAdminDto,
@@ -177,9 +169,7 @@ export class AuthService {
       });
 
       if (existingUnverifiedAdmin) {
-        const otp = await this.otpService.generateOtpForAdmin(
-          createAdminDto.email,
-        );
+        const otp = await this.otpService.generateOtp(createAdminDto.email);
         return {
           message:
             'A registration with this email is in progress. Please check your email for verification instructions.',
@@ -204,9 +194,7 @@ export class AuthService {
 
       const { password } = createAdminDto;
       const hashedPassword = await this.bcryptService.hash(password, 10);
-      const otp = await this.otpService.generateOtpForAdmin(
-        createAdminDto.email,
-      );
+      const otp = await this.otpService.generateOtp(createAdminDto.email);
       this.EmailService.createEmail(createAdminDto.email, 'ADMIN');
       const admin = this.AdminRepository.create({
         ...createAdminDto,
@@ -227,7 +215,7 @@ export class AuthService {
     }
   }
   async adminOtpVerification(verifyOtpDto: VerifyOtpDto) {
-    return this.otpService.verifyOtpforAdmin(verifyOtpDto);
+    return this.otpService.verifyOtp(verifyOtpDto, 'admin');
   }
 
   async studentLogin(loginStudentDto: LoginStudentDto) {

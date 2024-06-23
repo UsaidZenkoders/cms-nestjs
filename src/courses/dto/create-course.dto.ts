@@ -1,4 +1,4 @@
-import { IsDate, IsDateString, IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsDateString, IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateCourseDto {
   @IsString()
@@ -16,5 +16,5 @@ export class CreateCourseDto {
   deadline: Date;
   @IsNotEmpty()
   @IsEmail()
-  teacher_id:string
+  teacher_id: string;
 }

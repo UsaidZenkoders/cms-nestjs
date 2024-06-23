@@ -1,11 +1,10 @@
-import { Body, Controller,Post } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { EnrolmentService } from './enrolment.service';
+import { AuthenticationGuard } from 'src/guards/authentication.guard';
+import { AuthorizationGuard } from 'src/guards/authorization.guard';
 
+@UseGuards(AuthenticationGuard, AuthorizationGuard)
 @Controller('enrolment')
 export class EnrolmentController {
-    constructor(private EnrolmentService:EnrolmentService){}
-    @Post("")
-    Get(@Body() email:string){
-return this.EnrolmentService.GetAllEnrolmentsWithTeacher(email)
-    }
+  constructor(private enrolmentService: EnrolmentService) {}
 }
