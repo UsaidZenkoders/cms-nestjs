@@ -1,3 +1,4 @@
+import { Appointment } from 'src/appointment/entities/appointment';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 @Entity()
@@ -40,4 +41,6 @@ export class Student {
 
   @OneToMany(() => Enrolment, (enrolments) => enrolments.student_id)
   enrolments: Enrolment;
+  @OneToMany(() => Appointment, (appointment) => appointment.student_id)
+  appointments: Appointment;
 }

@@ -61,7 +61,7 @@ export class TeachersController {
   ) {
     return this.teacherService.updateTeacherProfile(email, updatedTeacherDto);
   }
-  
+
   @Post('/updateTeacherImage')
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)

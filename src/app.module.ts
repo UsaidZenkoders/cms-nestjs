@@ -22,6 +22,7 @@ import { Emails } from './emails/entity/emails.entity';
 import { Enrolment } from './enrolment/entities/enrolment.entity';
 import { EnrolmentModule } from './enrolment/enrolment.module';
 import { AppointmentModule } from './appointment/appointment.module';
+import { SlotsModule } from './slots/slots.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -55,6 +56,7 @@ import { AppointmentModule } from './appointment/appointment.module';
     MailModule,
     EnrolmentModule,
     AppointmentModule,
+    SlotsModule,
   ],
   controllers: [AppController],
   providers: [AppService, BcryptService],
