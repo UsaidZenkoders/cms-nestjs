@@ -7,6 +7,8 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { CoursesService } from 'src/courses/courses.service';
@@ -15,36 +17,58 @@ import { UpdateCourseDto } from 'src/courses/dto/update-course.dto';
 import { Roles } from 'src/decorators/role.decorator';
 import { EnrolmentService } from 'src/enrolment/enrolment.service';
 import { Role } from 'src/enum/role.enum';
+import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { TeachersService } from './teachers.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
+@Roles(Role.teacher)
 @Controller('teachers')
 export class TeachersController {
   constructor(
     private readonly enrolmentsService: EnrolmentService,
     private readonly courseService: CoursesService,
+    private readonly teacherService: TeachersService,
   ) {}
-  @Roles(Role.teacher)
   @HttpCode(HttpStatus.OK)
   @Post('/teachersEnrolment')
   async getEnrolmentsbyEmail(@Body('email') email: string) {
     return await this.enrolmentsService.GetAllEnrolmentsWithTeacher(email);
   }
-  @Roles(Role.teacher)
+
   @Post('/addCourse')
   async Create(@Body(ValidationPipe) createCourseDto: CreateCourseDto) {
     return await this.courseService.create(createCourseDto);
   }
-  @Roles(Role.teacher)
+
   @Patch('/updateCourse/:id')
-  async Update(
+  async UpdateCourse(
     @Param('id') id: string,
     @Body(ValidationPipe) updateCourseDto: UpdateCourseDto,
   ) {
     return await this.courseService.updateCourse(id, updateCourseDto);
   }
 
-  @Roles(Role.teacher)
   @Delete('/deleteCourse/:id')
   async delete(@Param('id') id: string, @Body() email: string) {
     return await this.courseService.deleteCourse(id, email);
+  }
+
+  @Patch('/updateProfile')
+  @HttpCode(HttpStatus.OK)
+  UpdateProfile(
+    @Param('email') email: string,
+    @Body() updatedTeacherDto: UpdateTeacherDto,
+  ) {
+    return this.teacherService.updateTeacherProfile(email, updatedTeacherDto);
+  }
+  
+  @Post('/updateTeacherImage')
+  @UseInterceptors(FileInterceptor('image'))
+  @HttpCode(HttpStatus.OK)
+  async UpdatePicture(
+    @Param('email') email: string,
+    @UploadedFile() image: Express.Multer.File,
+  ) {
+    return await this.teacherService.UpdateImage(email, image);
   }
 }

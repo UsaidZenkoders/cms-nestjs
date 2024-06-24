@@ -3,9 +3,14 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
   Post,
   UseGuards,
   ValidationPipe,
+  Get,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Roles } from 'src/decorators/role.decorator';
 import { CreateEnrolmentDto } from 'src/enrolment/dto/create-enrolment.dto';
@@ -14,25 +19,53 @@ import { EnrolmentService } from 'src/enrolment/enrolment.service';
 import { Role } from 'src/enum/role.enum';
 import { AuthenticationGuard } from 'src/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/guards/authorization.guard';
+import { UpdateStudentDto } from './dto/update-student.dto';
+import { StudentsService } from './students.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateAdminDto } from 'src/admin/dto/create-admin.dto';
 @UseGuards(AuthenticationGuard, AuthorizationGuard)
+@Roles(Role.student)
 @Controller('students')
 export class StudentsController {
-  constructor(private readonly enrolmentService: EnrolmentService) {}
-  @Roles(Role.student)
+  constructor(
+    private readonly enrolmentService: EnrolmentService,
+    private readonly studentService: StudentsService,
+  ) {}
+
   @Post('/addEnrolment')
   Create(@Body(ValidationPipe) createEnrolmentDto: CreateEnrolmentDto) {
     return this.enrolmentService.Create(createEnrolmentDto);
   }
-  @Roles(Role.student)
   @Post('/dropCourse')
   @HttpCode(HttpStatus.OK)
   Drop(@Body(ValidationPipe) dropCourseDto: DropCourseDto) {
     return this.enrolmentService.DropCourse(dropCourseDto);
   }
-  @Roles(Role.student)
   @Post('/getEnrolmentsbyEmail')
   @HttpCode(HttpStatus.OK)
-  Get(@Body('email') email: string) {
+  Post(@Body('email') email: string) {
     return this.enrolmentService.GetAllEnrolments(email);
+  }
+  @Patch('/updateProfile')
+  UpdateProfile(
+    @Param('email') email: string,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ) {
+    return this.studentService.updateStudentProfile(email, updateStudentDto);
+  }
+
+  @Get('/viewProfile/:email')
+  async ViewProfile(@Param('email') email: string) {
+    return await this.studentService.ViewProfileDetails(email);
+  }
+
+  @Post('/updateStudentImage')
+  @UseInterceptors(FileInterceptor('image'))
+  @HttpCode(HttpStatus.OK)
+  async UpdatePicture(
+    @Param('email') email: string,
+    @UploadedFile() image: Express.Multer.File,
+  ) {
+    return await this.studentService.UpdateImage(email, image);
   }
 }

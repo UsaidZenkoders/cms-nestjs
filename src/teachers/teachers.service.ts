@@ -3,11 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Teacher } from './entities/teacher.entity';
 import { Repository } from 'typeorm';
 import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
+import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { ImageUploadService } from 'src/image-upload/image-upload.service';
 
 @Injectable()
 export class TeachersService {
   constructor(
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
+    private readonly imageUploadService:ImageUploadService
   ) {}
   async getAllTeachers(paginationSearchDto: PaginationSearchDto) {
     try {
@@ -33,5 +36,35 @@ export class TeachersService {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+  async updateTeacherProfile(
+    email: string,
+    updateTeacherDto: UpdateTeacherDto,
+  ) {
+    try {
+      const teacher = await this.TeacherRepository.findOneBy({ email: email });
+      console.log(teacher);
+      const updatedTeacher = await this.TeacherRepository.save({
+        ...teacher,
+        ...updateTeacherDto,
+      });
+
+      return {
+        message: 'Teacher Updated Successfully',
+        UpdatedTeacher: updatedTeacher,
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async UpdateImage(email: string, image: Express.Multer.File) {
+    const teacher = await this.TeacherRepository.findOneBy({
+      email: email,
+    });
+    if (!teacher) {
+      throw new BadRequestException('Student doesnot exist');
+    }
+    const imageUrl = await this.imageUploadService.uploadImage(image);
+    await this.TeacherRepository.save({ ...teacher, img: imageUrl });
   }
 }

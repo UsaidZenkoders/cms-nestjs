@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   UseGuards,
@@ -17,6 +18,7 @@ import { StudentsService } from 'src/students/students.service';
 import { TeachersService } from 'src/teachers/teachers.service';
 import { CreateWhiteListDto } from 'src/whitelist/dto/create-whitelist.dto';
 import { WhitelistService } from 'src/whitelist/whitelist.service';
+import { AdminService } from './admin.service';
 
 @UseGuards(AuthenticationGuard, AuthorizationGuard)
 @Controller('admin')
@@ -26,6 +28,7 @@ export class AdminController {
     private readonly whitelistService: WhitelistService,
     private readonly teacherService: TeachersService,
     private readonly studentService: StudentsService,
+    private readonly adminService: AdminService,
   ) {}
 
   @Post('/addDomain')
@@ -43,5 +46,9 @@ export class AdminController {
   @Get('/allTeachers')
   findAllTeachers(@Query() paginationSearchDto: PaginationSearchDto) {
     return this.teacherService.getAllTeachers(paginationSearchDto);
+  }
+  @Post('/suspendStudent/:email')
+  SuspendStudent(@Param('email') email: string) {
+    return this.adminService.SuspendStudent(email);
   }
 }

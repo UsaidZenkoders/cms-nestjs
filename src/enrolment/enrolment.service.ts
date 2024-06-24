@@ -33,21 +33,23 @@ export class EnrolmentService {
     const coursewithCode = await this.CourseRepository.findOneBy({
       code: createEnrolmentDto.course_code,
     });
-    const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
-      course_code: coursewithCode,
-      student_id: studentwithId,
-    });
-    if (alreadyEnrolledStudent) {
-      throw new BadRequestException(
-        'Student is already enrolled in this course',
-      );
-    }
     if (!studentwithId) {
       throw new BadRequestException('Student with this id doesnot exist');
     }
     if (!coursewithCode) {
       throw new BadRequestException('Course doesnot exist');
     }
+    const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
+      course_code: coursewithCode,
+      student_id: studentwithId,
+    });
+    console.log(alreadyEnrolledStudent);
+    if (alreadyEnrolledStudent) {
+      throw new BadRequestException(
+        'Student is already enrolled in this course',
+      );
+    }
+
     if (new Date(coursewithCode.deadline) < new Date()) {
       throw new BadRequestException('Deadline has been passed');
     }
@@ -98,7 +100,7 @@ export class EnrolmentService {
           .getMany();
 
       if (!studentsEnrolled || studentsEnrolled.length === 0) {
-        throw new NotFoundException(
+        throw new BadRequestException(
           'No students enrolled in courses taught by this teacher',
         );
       }
@@ -125,7 +127,7 @@ export class EnrolmentService {
       };
     } catch (error) {
       console.error('Error fetching students enrolled:', error);
-      throw new BadRequestException('Error fetching students enrolled');
+      throw new BadRequestException(error.message);
     }
   }
   async DropCourse(dropCourseDto: DropCourseDto) {

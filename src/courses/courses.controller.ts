@@ -4,7 +4,7 @@ import { UseGuards } from '@nestjs/common';
 import { AuthenticationGuard } from 'src/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/guards/authorization.guard';
 
-@UseGuards(AuthenticationGuard, AuthorizationGuard)
+@UseGuards(AuthenticationGuard)
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly courseService: CoursesService) {}

@@ -35,8 +35,6 @@ export class CoursesService {
       if (alreadyExist) {
         return {
           message: 'Course already exist',
-          code: alreadyExist.code,
-          status: HttpStatus.CONFLICT,
         };
       }
       if (new Date(createCourseDto.deadline) < new Date()) {
@@ -44,6 +42,7 @@ export class CoursesService {
           'Deadline must be greater than current date',
         );
       }
+
       const addedCourse = this.CourseRepository.create({
         ...createCourseDto,
         teacher_id: teacherWithId,
@@ -64,12 +63,15 @@ export class CoursesService {
   }
   async getAllCourses() {
     try {
-      const courses = await this.CourseRepository.find();
+      const courses = await this.CourseRepository.find({
+        relations: { teacher_id: true },
+      });
       if (courses.length >= 1) {
         return {
-          courses,
+          courses: courses,
         };
       }
+
       throw new NotFoundException('No course to show');
     } catch (error) {
       throw new InternalServerErrorException(error.message);

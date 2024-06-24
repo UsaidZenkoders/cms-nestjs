@@ -3,10 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Student } from './entities/student.entity';
 import { Repository } from 'typeorm';
 import { PaginationSearchDto } from './dto/pagination-seach.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
+import { ImageUploadService } from 'src/image-upload/image-upload.service';
 @Injectable()
 export class StudentsService {
   constructor(
     @InjectRepository(Student) private StudentRepository: Repository<Student>,
+    private imageUploadService: ImageUploadService,
   ) {}
   async getAllStudents(paginationSearchDto: PaginationSearchDto) {
     try {
@@ -32,5 +35,42 @@ export class StudentsService {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+  async updateStudentProfile(
+    email: string,
+    updateStudentDto: UpdateStudentDto,
+  ) {
+    try {
+      const student = await this.StudentRepository.findOneBy({ email: email });
+      console.log(student);
+      const updatedStudent = await this.StudentRepository.save({
+        ...student,
+        ...updateStudentDto,
+      });
+
+      return {
+        message: 'Student Updated Successfully',
+        student: updatedStudent,
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async ViewProfileDetails(email: string) {
+    const studentProfile = await this.StudentRepository.findOneBy({
+      email: email,
+    });
+
+    return { student: studentProfile };
+  }
+  async UpdateImage(email: string, image: Express.Multer.File) {
+    const Student = await this.StudentRepository.findOneBy({
+      email: email,
+    });
+    if (!Student) {
+      throw new BadRequestException('Student doesnot exist');
+    }
+    const imageUrl = await this.imageUploadService.uploadImage(image);
+    await this.StudentRepository.save({ ...Student, img: imageUrl });
   }
 }

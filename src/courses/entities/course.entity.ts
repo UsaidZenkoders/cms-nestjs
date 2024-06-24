@@ -25,7 +25,9 @@ export class Course {
   updated_at: Date;
   @OneToMany(() => Enrolment, (enrolment) => enrolment.course_code)
   enrolments: Enrolment;
-  @ManyToOne(() => Teacher, (teacher) => teacher.courses)
+  @ManyToOne(() => Teacher, (teacher) => teacher.courses, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'teacher_id' })
   teacher_id: Teacher;
 }

@@ -225,7 +225,12 @@ export class AuthService {
     if (!userwithEmail) {
       throw new UnauthorizedException('Student with this email doesnot exist');
     }
-    if (userwithEmail && userwithEmail.is_verified) {
+    if (userwithEmail.is_suspended) {
+      return {
+        message: 'You are suspended by the admin , cant login',
+      };
+    }
+    if (userwithEmail && userwithEmail.is_verified ) {
       const { password } = loginStudentDto;
       const dbPass = userwithEmail.password;
       const matchedPassword = await this.bcryptService.compare(

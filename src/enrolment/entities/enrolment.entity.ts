@@ -23,12 +23,16 @@ export class Enrolment {
   created_at: Date;
 
   // MANY ENROLMENTS BELONG TO ONE COURSE
-  @ManyToOne(() => Course, (course) => course.enrolments)
+  @ManyToOne(() => Course, (course) => course.enrolments, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'course_code' })
   course_code: Course;
 
   // MANY ENROLMENTS BELONG TO ONE STUDENT
-  @ManyToOne(() => Student, (student) => student.enrolments)
+  @ManyToOne(() => Student, (student) => student.enrolments, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'student_id' })
   student_id: Student;
 }
