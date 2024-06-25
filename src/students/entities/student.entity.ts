@@ -39,8 +39,8 @@ export class Student {
   @Column({ type: 'timestamptz' })
   updated_at: Date;
 
-  @OneToMany(() => Enrolment, (enrolments) => enrolments.student_id)
+  @OneToMany(() => Enrolment, (enrolment) => enrolment.student_id)
   enrolments: Enrolment;
-  @OneToMany(() => Appointment, (appointment) => appointment.student_id)
+  @OneToMany(() => Appointment, (appointments) => appointments.student_id)
   appointments: Appointment;
 }

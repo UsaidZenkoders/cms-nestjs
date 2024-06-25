@@ -11,6 +11,7 @@ import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { TeachersService } from 'src/teachers/teachers.service';
 import { StudentsService } from 'src/students/students.service';
 import { Student } from 'src/students/entities/student.entity';
+import { ImageUploadService } from 'src/image-upload/image-upload.service';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Student } from 'src/students/entities/student.entity';
     CoursesService,
     TeachersService,
     StudentsService,
+    ImageUploadService,
   ],
 })
 export class AdminModule {}

@@ -5,8 +5,10 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
   ValidationPipe,
@@ -20,6 +22,9 @@ import { Role } from 'src/enum/role.enum';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { TeachersService } from './teachers.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateSlotDto } from 'src/slots/dto/create-slot.dto';
+import { SlotsService } from 'src/slots/slots.service';
+import { UpdateSlotDto } from 'src/slots/dto/update-slot.dto';
 
 @Roles(Role.teacher)
 @Controller('teachers')
@@ -28,6 +33,7 @@ export class TeachersController {
     private readonly enrolmentsService: EnrolmentService,
     private readonly courseService: CoursesService,
     private readonly teacherService: TeachersService,
+    private readonly slotService: SlotsService,
   ) {}
   @HttpCode(HttpStatus.OK)
   @Post('/teachersEnrolment')
@@ -53,11 +59,11 @@ export class TeachersController {
     return await this.courseService.deleteCourse(id, email);
   }
 
-  @Patch('/updateProfile')
+  @Patch('/updateProfile/:email')
   @HttpCode(HttpStatus.OK)
   UpdateProfile(
     @Param('email') email: string,
-    @Body() updatedTeacherDto: UpdateTeacherDto,
+    @Body(ValidationPipe) updatedTeacherDto: UpdateTeacherDto,
   ) {
     return this.teacherService.updateTeacherProfile(email, updatedTeacherDto);
   }
@@ -70,5 +76,22 @@ export class TeachersController {
     @UploadedFile() image: Express.Multer.File,
   ) {
     return await this.teacherService.UpdateImage(email, image);
+  }
+  @Post('/createSlot')
+  async CreateSlot(@Body(ValidationPipe) createSlotDto: CreateSlotDto) {
+    return await this.slotService.Create(createSlotDto);
+  }
+  @Patch('/updateSlot/:id')
+  @HttpCode(HttpStatus.OK)
+  async UpdateSlot(
+    @Param('id', ParseIntPipe) id: number,
+    @Body(ValidationPipe) updateSlotDto: UpdateSlotDto,
+  ) {
+    console.log(updateSlotDto);
+    return await this.slotService.updateSlot(id, updateSlotDto);
+  }
+  @Delete('/deleteSlot/:id')
+  async deleteSlot(@Param('id',ParseIntPipe) id: number, @Query('email') email: string) {
+    return await this.slotService.deleteSlotbyId(id, email);
   }
 }

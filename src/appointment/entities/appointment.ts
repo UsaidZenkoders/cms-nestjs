@@ -7,6 +7,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -16,7 +17,11 @@ export class Appointment {
   id: number;
   @Column({ type: 'timestamptz' })
   created_at: Date;
-  @Column({ type: 'enum', default: AppointmentStatus.pending })
+  @Column({
+    type: 'enum',
+    enum: AppointmentStatus,
+    default: AppointmentStatus.pending,
+  })
   status: AppointmentStatus;
   @ManyToOne(() => Student, (student) => student.appointments)
   @JoinColumn({ name: 'student_id' })
@@ -24,7 +29,7 @@ export class Appointment {
   @ManyToOne(() => Teacher, (teacher) => teacher.appointments)
   @JoinColumn({ name: 'teacher_id' })
   teacher_id: Teacher;
-  @ManyToOne(() => Slots, (slot) => slot.appointments)
+  @OneToOne(() => Slots)
   @JoinColumn({ name: 'slot_id' })
   slot_id: Slots;
 }

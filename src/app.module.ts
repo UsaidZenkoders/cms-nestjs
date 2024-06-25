@@ -23,6 +23,8 @@ import { Enrolment } from './enrolment/entities/enrolment.entity';
 import { EnrolmentModule } from './enrolment/enrolment.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { SlotsModule } from './slots/slots.module';
+import { Appointment } from './appointment/entities/appointment';
+import { Slots } from './slots/entities/slots';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -41,6 +43,8 @@ import { SlotsModule } from './slots/slots.module';
         Otp,
         Enrolment,
         Emails,
+        Appointment,
+        Slots,
       ],
       synchronize: true,
     }),
