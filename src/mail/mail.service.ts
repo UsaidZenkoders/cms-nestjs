@@ -3,8 +3,11 @@ import { MailerService } from '@nestjs-modules/mailer';
 
 interface AppointmentDetails {
   student_id: string;
-  slot_id: number;
-  
+  slot_detail: {
+    start_time: string;
+    end_time: string;
+    date: string;
+  };
 }
 @Injectable()
 export class MailService {
@@ -26,14 +29,31 @@ export class MailService {
   }
   sendAppointmentMail(email: string, details: AppointmentDetails) {
     try {
-      const { student_id, slot_id } = details;
+      const { student_id, slot_detail } = details;
       this.mailerService.sendMail({
         to: email,
         from: 'usaid12.zenkoders@gmail.com',
         subject: 'Appointment Details',
         text: 'Please view the details',
-        html: `<p>FROM STUDENT<b>${student_id}<b></p><br><br><br><br>
-          <b> REQUESTED SLOT ${slot_id} </b>
+        html: `<p>Requested by  <b>${student_id}<b></p><br>
+          <b> Slot Details</b><br>
+          Date: <b>${slot_detail.date}<b><br>
+          Starting At: <b>${slot_detail.start_time}<b><br>
+          Ending At: <b>${slot_detail.end_time}<b><br>
+         `,
+      });
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+  sendAppointmentStatusMail(email: string, message: string) {
+    try {
+      this.mailerService.sendMail({
+        to: email,
+        from: 'usaid12.zenkoders@gmail.com',
+        subject: 'Appointment Confirmation',
+        text: 'Please view the details',
+        html: `Response: <b>${message}<b>
          `,
       });
     } catch (error) {

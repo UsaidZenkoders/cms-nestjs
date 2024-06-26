@@ -9,12 +9,13 @@ import { Course } from 'src/courses/entities/course.entity';
 import { Teacher } from './entities/teacher.entity';
 import { CoursesService } from 'src/courses/courses.service';
 import { ImageUploadService } from 'src/image-upload/image-upload.service';
-import { Slots } from 'src/slots/entities/slots';
-import { SlotsService } from 'src/slots/slots.service';
+import { AppointmentService } from 'src/appointment/appointment.service';
+import { Appointment } from 'src/appointment/entities/appointment';
+import { MailService } from 'src/mail/mail.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Enrolment, Student, Course, Teacher, Slots]),
+    TypeOrmModule.forFeature([Enrolment, Student, Course, Teacher,Appointment]),
   ],
   controllers: [TeachersController],
   providers: [
@@ -22,7 +23,8 @@ import { SlotsService } from 'src/slots/slots.service';
     EnrolmentService,
     CoursesService,
     ImageUploadService,
-    SlotsService,
+    AppointmentService,
+    MailService
   ],
 })
 export class TeachersModule {}

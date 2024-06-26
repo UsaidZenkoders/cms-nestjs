@@ -22,9 +22,7 @@ import { Emails } from './emails/entity/emails.entity';
 import { Enrolment } from './enrolment/entities/enrolment.entity';
 import { EnrolmentModule } from './enrolment/enrolment.module';
 import { AppointmentModule } from './appointment/appointment.module';
-import { SlotsModule } from './slots/slots.module';
 import { Appointment } from './appointment/entities/appointment';
-import { Slots } from './slots/entities/slots';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -44,7 +42,6 @@ import { Slots } from './slots/entities/slots';
         Enrolment,
         Emails,
         Appointment,
-        Slots,
       ],
       synchronize: true,
     }),
@@ -60,7 +57,6 @@ import { Slots } from './slots/entities/slots';
     MailModule,
     EnrolmentModule,
     AppointmentModule,
-    SlotsModule,
   ],
   controllers: [AppController],
   providers: [AppService, BcryptService],
