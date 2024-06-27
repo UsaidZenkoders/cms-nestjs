@@ -16,22 +16,22 @@ export class ChatMessage {
   message: string;
   @Column({ type: 'timestamptz' })
   created_at: Date;
-  @ManyToOne(() => Student, (student) => student.studentSent, {
+  @ManyToOne(() => Student, (student) => student.sentMessages, {
     nullable: true,
   })
   @JoinColumn({ name: 'senderStudent' })
   senderStudent: Student;
-  @ManyToOne(() => Student, (student) => student.studentrecieve, {
+  @ManyToOne(() => Student, (student) => student.reciveMessages, {
     nullable: true,
   })
   @JoinColumn({ name: 'recieverStudent' })
   recieverStudent: Student;
-  @ManyToOne(() => Teacher, (teacher) => teacher.teacherSent, {
+  @ManyToOne(() => Teacher, (teacher) => teacher.sentMessages, {
     nullable: true,
   })
   @JoinColumn({ name: 'senderTeacher' })
   senderTeacher: Teacher;
-  @ManyToOne(() => Teacher, (teacher) => teacher.teacherrecieve, {
+  @ManyToOne(() => Teacher, (teacher) => teacher.recieveMessages, {
     nullable: true,
   })
   @JoinColumn({ name: 'recieverTeacher' })

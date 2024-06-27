@@ -44,7 +44,7 @@ export class Teacher {
   @OneToMany(() => Appointment, (appointment) => appointment.teacher_id)
   appointments: Appointment;
   @OneToMany(() => ChatMessage, (message) => message.senderTeacher)
-  teacherSent: ChatMessage;
+  sentMessages: ChatMessage;
   @OneToMany(() => ChatMessage, (message) => message.recieverTeacher)
-  teacherrecieve: ChatMessage;
+  recieveMessages: ChatMessage;
 }
