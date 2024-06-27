@@ -2,13 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
   Post,
-  Query,
   UploadedFile,
   UseInterceptors,
   ValidationPipe,
@@ -80,11 +80,17 @@ export class TeachersController {
 
   @Post('/approveRejectAppointment/:id')
   async approveRejectAppointment(
-    @Param('id',ParseIntPipe) id:number,
+    @Param('id', ParseIntPipe) id: number,
     @Body(ValidationPipe) appointmentStatusDto: AppointmentStatusDto,
   ) {
     return await this.appointmentService.ApproveRejectAppointment(
-      appointmentStatusDto,id
+      appointmentStatusDto,
+      id,
     );
+  }
+
+  @Get('/appointments/:email')
+  async getAppointments(@Param('email') email: string) {
+    return await this.appointmentService.getAppointmentsbyId(email);
   }
 }

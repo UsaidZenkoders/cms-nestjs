@@ -23,6 +23,8 @@ import { Enrolment } from './enrolment/entities/enrolment.entity';
 import { EnrolmentModule } from './enrolment/enrolment.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { Appointment } from './appointment/entities/appointment';
+import { ChatModule } from './chat/chat.module';
+import { ChatMessageModule } from './chat-message/chat-message.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -57,6 +59,8 @@ import { Appointment } from './appointment/entities/appointment';
     MailModule,
     EnrolmentModule,
     AppointmentModule,
+    ChatModule,
+    ChatMessageModule,
   ],
   controllers: [AppController],
   providers: [AppService, BcryptService],

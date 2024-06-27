@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
   ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 
 import { Roles } from 'src/decorators/role.decorator';
@@ -40,10 +41,12 @@ export class AdminController {
   }
 
   @Get('/allStudents')
+  @UsePipes(new ValidationPipe({ transform: true }))
   findAllStudents(@Query() paginationSearchDto: PaginationSearchDto) {
     return this.studentService.getAllStudents(paginationSearchDto);
   }
   @Get('/allTeachers')
+  @UsePipes(new ValidationPipe({ transform: true }))
   findAllTeachers(@Query() paginationSearchDto: PaginationSearchDto) {
     return this.teacherService.getAllTeachers(paginationSearchDto);
   }

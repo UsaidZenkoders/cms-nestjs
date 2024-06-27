@@ -10,7 +10,7 @@ import { ImageUploadService } from 'src/image-upload/image-upload.service';
 export class TeachersService {
   constructor(
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
-    private readonly imageUploadService:ImageUploadService
+    private readonly imageUploadService: ImageUploadService,
   ) {}
   async getAllTeachers(paginationSearchDto: PaginationSearchDto) {
     try {
@@ -28,10 +28,17 @@ export class TeachersService {
         .skip((page - 1) * limit)
         .take(limit)
         .getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      const nextPage = page < totalPages ? page + 1 : null;
+      const previousPage = page > 1 ? page - 1 : null;
 
       return {
         data: result,
         count: total,
+        totalPages,
+        currentPage: page,
+        nextPage,
+        previousPage,
       };
     } catch (error) {
       throw new BadRequestException(error.message);

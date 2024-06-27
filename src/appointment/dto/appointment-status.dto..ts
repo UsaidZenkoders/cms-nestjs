@@ -13,5 +13,4 @@ export class AppointmentStatusDto {
 
   @IsNotEmpty()
   end_time: string;
- 
 }

@@ -187,14 +187,28 @@ export class AppointmentService {
       });
       const teacherRecord = await this.AppointmentRepository.find({
         where: { teacher_id: teacher },
-        relations: ['teacher_id'],
+        relations: ['teacher_id', 'student_id'],
       });
-      if (!teacherRecord || !teacher) {
-        throw new BadRequestException('Teacher doesnot exist');
-      }
+      const transformedData = teacherRecord.map((record) => ({
+        AppointmentDetails: {
+          id: record.id,
+          startingAt: record.start_time,
+          endingAt: record.end_time,
+          createdAt: record.created_at,
+          scheduledfor: record.date,
+        },
+        TeacherDetails: {
+          email: record.teacher_id.email,
+          username: record.teacher_id.username,
+        },
+        StudentDetails: {
+          email: record.teacher_id.email,
+          username: record.teacher_id.username,
+        },
+      }));
 
       return {
-        teacherRecord,
+        AppointmentSummary: transformedData,
       };
     } catch (error) {
       throw new BadRequestException(error.message);

@@ -61,7 +61,6 @@ export class AuthService {
       }
       const alreadyExist = await this.EmailService.getEmails(
         createStudentDto.email,
-        true,
       );
       if (alreadyExist) {
         throw new ConflictException('Email has already been taken');
@@ -88,6 +87,7 @@ export class AuthService {
         is_verified: false,
       });
       await this.StudentsRepository.save(student);
+      await this.EmailService.createEmail(createStudentDto.email, 'STUDENT');
       return {
         message: 'Otp sent to email. Please verify to complete registration',
         otpSent: true,
@@ -121,7 +121,6 @@ export class AuthService {
 
       const alreadyExist = await this.EmailService.getEmails(
         createTeacherDto.email,
-        true,
       );
       if (alreadyExist) {
         throw new ConflictException('Email has already been taken');
@@ -147,6 +146,7 @@ export class AuthService {
         is_verified: false,
       });
       await this.TeachersRepository.save(teacher);
+      await this.EmailService.createEmail(createTeacherDto.email, 'TEACHER');
       return {
         message: 'Otp sent to email. Please verify to complete registration',
         otpSent: true,
@@ -179,7 +179,6 @@ export class AuthService {
 
       const alreadyExist = await this.EmailService.getEmails(
         createAdminDto.email,
-        true,
       );
       if (alreadyExist) {
         throw new BadRequestException('Email has already been taken');
@@ -204,7 +203,9 @@ export class AuthService {
         updated_at: new Date(),
         is_verified: false,
       });
+
       await this.AdminRepository.save(admin);
+      await this.EmailService.createEmail(createAdminDto.email, 'ADMIN');
       return {
         message: 'Otp sent to email. Please verify to complete registration',
         otpSent: true,
@@ -230,7 +231,7 @@ export class AuthService {
         message: 'You are suspended by the admin , cant login',
       };
     }
-    if (userwithEmail && userwithEmail.is_verified ) {
+    if (userwithEmail && userwithEmail.is_verified) {
       const { password } = loginStudentDto;
       const dbPass = userwithEmail.password;
       const matchedPassword = await this.bcryptService.compare(

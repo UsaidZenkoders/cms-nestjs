@@ -1,4 +1,5 @@
 import { Appointment } from 'src/appointment/entities/appointment';
+import { ChatMessage } from 'src/chat-message/entities/chat-message.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 @Entity()
@@ -43,4 +44,8 @@ export class Student {
   enrolments: Enrolment;
   @OneToMany(() => Appointment, (appointments) => appointments.student_id)
   appointments: Appointment;
+  @OneToMany(() => ChatMessage, (message) => message.senderStudent)
+  studentSent: ChatMessage;
+  @OneToMany(() => ChatMessage, (message) => message.recieverStudent)
+  studentrecieve: ChatMessage;
 }
