@@ -1,4 +1,4 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsMilitaryTime, IsNotEmpty } from 'class-validator';
 import { AppointmentStatus } from 'src/enum/appointment-status.enum';
 
 export class AppointmentStatusDto {
@@ -9,8 +9,10 @@ export class AppointmentStatusDto {
 
   status: AppointmentStatus;
   @IsNotEmpty()
-  start_time: string;
+  @IsMilitaryTime()
+  start_time: Date;
 
   @IsNotEmpty()
-  end_time: string;
+  @IsMilitaryTime()
+  end_time: Date;
 }

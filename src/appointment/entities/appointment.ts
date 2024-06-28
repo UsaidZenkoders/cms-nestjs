@@ -16,11 +16,11 @@ export class Appointment {
   @Column()
   created_at: string;
   @Column({ type: 'time' })
-  start_time: string;
+  start_time: Date;
   @Column({ type: 'date' })
-  date: string;
+  date: Date;
   @Column({ type: 'time' })
-  end_time: string;
+  end_time: Date;
   @Column({
     type: 'enum',
     enum: AppointmentStatus,

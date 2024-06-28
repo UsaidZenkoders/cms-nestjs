@@ -1,3 +1,4 @@
+import { Chat } from 'src/chat/entities/chat.entity';
 import { Student } from 'src/students/entities/student.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import {
@@ -14,13 +15,16 @@ export class ChatMessage {
   id: number;
   @Column()
   message: string;
-  @Column({ type: 'timestamptz' })
-  created_at: Date;
+  @Column()
+  created_at: string;
   @ManyToOne(() => Student, (student) => student.sentMessages, {
     nullable: true,
   })
-  @JoinColumn({ name: 'senderStudent' })
-  senderStudent: Student;
+  @ManyToOne(() => Chat, (chat) => chat.messages, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'chat_id' })
+  chat_id: Chat;
   @ManyToOne(() => Student, (student) => student.reciveMessages, {
     nullable: true,
   })

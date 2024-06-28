@@ -7,6 +7,7 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 import { ImageUploadService } from 'src/image-upload/image-upload.service';
 @Injectable()
 export class StudentsService {
+ 
   constructor(
     @InjectRepository(Student) private StudentRepository: Repository<Student>,
     private imageUploadService: ImageUploadService,
@@ -80,5 +81,16 @@ export class StudentsService {
     }
     const imageUrl = await this.imageUploadService.uploadImage(image);
     await this.StudentRepository.save({ ...Student, img: imageUrl });
+  }
+  async findOnebyId(email:string){
+    const student = await this.StudentRepository.findOne({
+      where: {
+        email:email
+      },
+    });
+    if (!student){
+      throw new BadRequestException("Student doesnot exist")
+    }
+    return student
   }
 }

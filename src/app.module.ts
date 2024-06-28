@@ -25,6 +25,8 @@ import { AppointmentModule } from './appointment/appointment.module';
 import { Appointment } from './appointment/entities/appointment';
 import { ChatModule } from './chat/chat.module';
 import { ChatMessageModule } from './chat-message/chat-message.module';
+import { Chat } from './chat/entities/chat.entity';
+import { ChatMessage } from './chat-message/entities/chat-message.entity';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -44,6 +46,8 @@ import { ChatMessageModule } from './chat-message/chat-message.module';
         Enrolment,
         Emails,
         Appointment,
+        Chat,
+        ChatMessage
       ],
       synchronize: true,
     }),

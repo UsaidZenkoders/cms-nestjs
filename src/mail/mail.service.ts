@@ -4,9 +4,9 @@ import { MailerService } from '@nestjs-modules/mailer';
 interface AppointmentDetails {
   student_id: string;
   slot_detail: {
-    start_time: string;
-    end_time: string;
-    date: string;
+    start_time: Date;
+    end_time: Date;
+    date: Date;
   };
 }
 @Injectable()

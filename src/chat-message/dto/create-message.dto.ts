@@ -10,8 +10,6 @@ export class CreateChatMessageDto {
   @IsNotEmpty()
   message: string;
 
-  @IsDateString()
-  @IsNotEmpty()
   created_at: Date;
 
   @IsOptional()

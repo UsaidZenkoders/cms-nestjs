@@ -1,4 +1,4 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsDateString, IsMilitaryTime, IsNotEmpty } from 'class-validator';
 
 export class CreateAppointmentDto {
   @IsNotEmpty()
@@ -6,9 +6,12 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   teacher_id: string;
   @IsNotEmpty()
-  start_time: string;
+  @IsMilitaryTime({message:"Format should be hh-mm"})
+  start_time: Date;
   @IsNotEmpty()
-  date: string;
+  @IsDateString()
+  date: Date;
   @IsNotEmpty()
-  end_time: string;
+  @IsMilitaryTime()
+  end_time: Date;
 }

@@ -9,6 +9,7 @@ import { AppointmentStatus } from 'src/enum/appointment-status.enum';
 import { MailService } from 'src/mail/mail.service';
 import { AppointmentStatusDto } from './dto/appointment-status.dto.';
 import { ConfirmationMessage } from './constants';
+import { getFormattedDate } from 'src/helpers/Date-formatter';
 
 @Injectable()
 export class AppointmentService {
@@ -51,14 +52,13 @@ export class AppointmentService {
       if (new Date(date) < new Date()) {
         throw new BadRequestException('Invalid Date ');
       }
-      const transformedDate = new Date().toString().split(' ');
-      const mergedString = transformedDate.slice(0, 5).join(' ');
+      const formattedDate = getFormattedDate();
 
       const appointment = this.AppointmentRepository.create({
         ...createAppointmentDto,
         student_id: student,
         teacher_id: teacher,
-        created_at: mergedString,
+        created_at: formattedDate,
         status: AppointmentStatus.pending,
       });
       const details = {

@@ -8,6 +8,7 @@ import { ImageUploadService } from 'src/image-upload/image-upload.service';
 
 @Injectable()
 export class TeachersService {
+  
   constructor(
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
     private readonly imageUploadService: ImageUploadService,
@@ -73,5 +74,16 @@ export class TeachersService {
     }
     const imageUrl = await this.imageUploadService.uploadImage(image);
     await this.TeacherRepository.save({ ...teacher, img: imageUrl });
+  }
+  async findOnebyId(email:string){
+    const teacher = await this.TeacherRepository.findOne({
+      where: {
+        email:email
+      },
+    });
+    if (!teacher){
+      throw new BadRequestException("Teacher doesnot exist")
+    }
+    return teacher
   }
 }
