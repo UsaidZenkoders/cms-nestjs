@@ -28,7 +28,11 @@ import { ChatRoomModule } from './chat-room/chat-room.module';
 import { MessageModule } from './message/message.module';
 import { ChatRoom } from './chat-room/entities/chat-room.entity';
 import { Messages } from './message/entities/message.entity';
+import { StripeModule } from './stripe/stripe.module';
+import { ConfigModule } from '@nestjs/config';
+import { CartModule } from './cart/cart.module';
 @Module({
+
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -52,6 +56,9 @@ import { Messages } from './message/entities/message.entity';
       ],
       synchronize: true,
     }),
+    ConfigModule.forRoot({
+      isGlobal:true
+    }),
 
     StudentsModule,
     AdminModule,
@@ -66,6 +73,8 @@ import { Messages } from './message/entities/message.entity';
     AppointmentModule,
     ChatRoomModule,
     MessageModule,
+    StripeModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService, BcryptService],

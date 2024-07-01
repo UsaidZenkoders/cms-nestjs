@@ -9,6 +9,10 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { Emails } from 'src/emails/entity/emails.entity';
 import { getFormattedDate } from 'src/helpers/Date-formatter';
 
+interface AllMessages {
+  message: string;
+}
+
 @Injectable()
 export class MessageService {
   constructor(
@@ -53,5 +57,17 @@ export class MessageService {
       console.log(error.message);
       throw new BadRequestException(error.message);
     }
+  }
+  async getAllMessages(roomId: string){
+    const roomwithId=await this.ChatRoomRepository.findOne({where:{id:roomId}})
+    const allMessages = await this.MessagesRepository.find({
+      where: { roomId: roomwithId },
+    });
+    if (!allMessages){
+      return {
+        message:"No message to show"
+      }
+    }
+    return allMessages
   }
 }

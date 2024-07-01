@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ChatRoom } from './entities/chat-room.entity';
@@ -32,7 +31,7 @@ export class ChatRoomService {
         relations: ['student_id', 'teacher_id'],
       });
       if (alreadyExist) {
-        throw new BadRequestException('Room with this user already exist');
+        return alreadyExist.id
       }
       const formattedDate = getFormattedDate();
       const extractedTeacherEmail = createChatRoomDto.student_id.split('@')[0];
@@ -46,26 +45,12 @@ export class ChatRoomService {
         id: roomId,
       });
       await this.ChatRoomRepository.save(room);
-      return {
-        message: 'Chat room created successfully',
-        room: room,
-      };
+      return roomId
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error.message);
     }
   }
-  async findOnebyId(roomId: string) {
-    try {
-      const roomExist = await this.ChatRoomRepository.findOne({
-        where: { id: roomId },
-      });
-      if (!roomExist) {
-        throw new NotFoundException('Room doesnot exist');
-      }
-      return roomExist;
-    } catch (error) {
-      console.log(error);
-    }
-  }
+
+ 
 }

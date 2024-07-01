@@ -13,6 +13,7 @@ import { Messages } from 'src/message/entities/message.entity';
 import { MessageService } from 'src/message/message.service';
 import { Emails } from 'src/emails/entity/emails.entity';
 import { EmailsService } from 'src/emails/emails.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Module({
   imports: [

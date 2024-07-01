@@ -1,4 +1,6 @@
+import { Cart } from 'src/cart/entities/cart.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
+import { CourseStatus } from 'src/enum/course-status.enum';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import {
   Column,
@@ -17,6 +19,14 @@ export class Course {
   name: string;
   @Column()
   description: string;
+  @Column()
+  price: number;
+  @Column({
+    type: 'enum',
+    enum: CourseStatus,
+    default: CourseStatus.free,
+  })
+  status: CourseStatus;
   @Column({ type: 'date' })
   deadline: Date;
   @Column({ type: 'timestamptz' })
@@ -30,4 +40,6 @@ export class Course {
   })
   @JoinColumn({ name: 'teacher_id' })
   teacher_id: Teacher;
+  @ManyToOne(() => Cart, (cart) => cart.course_code)
+  cart:Cart
 }
