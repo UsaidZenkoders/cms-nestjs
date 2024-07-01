@@ -23,10 +23,11 @@ import { Enrolment } from './enrolment/entities/enrolment.entity';
 import { EnrolmentModule } from './enrolment/enrolment.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { Appointment } from './appointment/entities/appointment';
-import { ChatModule } from './chat/chat.module';
-import { ChatMessageModule } from './chat-message/chat-message.module';
-import { Chat } from './chat/entities/chat.entity';
-import { ChatMessage } from './chat-message/entities/chat-message.entity';
+
+import { ChatRoomModule } from './chat-room/chat-room.module';
+import { MessageModule } from './message/message.module';
+import { ChatRoom } from './chat-room/entities/chat-room.entity';
+import { Messages } from './message/entities/message.entity';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -46,8 +47,8 @@ import { ChatMessage } from './chat-message/entities/chat-message.entity';
         Enrolment,
         Emails,
         Appointment,
-        Chat,
-        ChatMessage
+        ChatRoom,
+        Messages,
       ],
       synchronize: true,
     }),
@@ -63,8 +64,8 @@ import { ChatMessage } from './chat-message/entities/chat-message.entity';
     MailModule,
     EnrolmentModule,
     AppointmentModule,
-    ChatModule,
-    ChatMessageModule,
+    ChatRoomModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService, BcryptService],
