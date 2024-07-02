@@ -12,14 +12,13 @@ import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
+import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
 
 @Injectable()
 export class CoursesService {
   constructor(
     @InjectRepository(Course) private CourseRepository: Repository<Course>,
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
-    @InjectRepository(Enrolment)
-    private EnrolmentRepository: Repository<Enrolment>,
   ) {}
   async create(createCourseDto: CreateCourseDto) {
     try {
@@ -61,20 +60,52 @@ export class CoursesService {
       };
     }
   }
-  async getAllCourses() {
+  async getAllCourses(paginationSearchDto: PaginationSearchDto) {
     try {
-      const courses = await this.CourseRepository.find({
-        relations: { teacher_id: true },
-      });
-      if (courses.length >= 1) {
-        return {
-          courses: courses,
-        };
+      const { page, limit, search } = paginationSearchDto;
+      const query = this.CourseRepository.createQueryBuilder('course');
+
+      if (search) {
+        query.where('course.code LIKE :search OR course.name LIKE :search', {
+          search: `%${search}%`,
+        });
       }
 
-      throw new NotFoundException('No course to show');
+      const [result, total] = await query
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      const nextPage = page < totalPages ? page + 1 : null;
+      const previousPage = page > 1 ? page - 1 : null;
+
+      return {
+        data: result,
+        count: total,
+        totalPages,
+        currentPage: page,
+        nextPage,
+        previousPage,
+      };
     } catch (error) {
-      throw new InternalServerErrorException(error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+  async getCourseByCode(code: string) {
+    try {
+      const coursebyId = await this.CourseRepository.findOne({
+        where: {
+          code,
+        },
+      });
+      if (!coursebyId) {
+        throw new NotFoundException('Course doesnot exist');
+      }
+      return {
+        Course: coursebyId,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
   }
   async updateCourse(id: string, updateCourseDto: UpdateCourseDto) {
@@ -99,6 +130,9 @@ export class CoursesService {
   }
   async deleteCourse(id: string, email: string) {
     try {
+      if (!email) {
+        throw new BadRequestException('Please pass the email as query param');
+      }
       const teacherId = await this.TeacherRepository.findOneBy({
         email: email,
       });

@@ -10,6 +10,7 @@ import { MailService } from 'src/mail/mail.service';
 import { AppointmentStatusDto } from './dto/appointment-status.dto.';
 import { ConfirmationMessage } from './constants';
 import { getFormattedDate } from 'src/helpers/Date-formatter';
+import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
 
 @Injectable()
 export class AppointmentService {
@@ -180,14 +181,14 @@ export class AppointmentService {
       };
     }
   }
-  async getAppointmentsbyId(email: string) {
+  async getAppointmentsbyTeacherId(email: string) {
     try {
       const teacher = await this.TeacherRepository.find({
         where: { email: email },
       });
       const teacherRecord = await this.AppointmentRepository.find({
         where: { teacher_id: teacher },
-        relations: ['teacher_id', 'student_id'],
+        relations: ['teacher_id'],
       });
       const transformedData = teacherRecord.map((record) => ({
         AppointmentDetails: {
@@ -209,6 +210,71 @@ export class AppointmentService {
 
       return {
         AppointmentSummary: transformedData,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+  async getAppointmentsbyStudentId(email: string) {
+    try {
+      const student = await this.StudentRepository.find({
+        where: { email: email },
+      });
+      const studentRecord = await this.AppointmentRepository.find({
+        where: { student_id: student },
+        relations: [ 'student_id'],
+      });
+      const transformedData = studentRecord.map((record) => ({
+        AppointmentDetails: {
+          id: record.id,
+          startingAt: record.start_time,
+          endingAt: record.end_time,
+          createdAt: record.created_at,
+          scheduledfor: record.date,
+        },
+        TeacherDetails: {
+          email: record.teacher_id.email,
+          username: record.teacher_id.username,
+        },
+        StudentDetails: {
+          email: record.teacher_id.email,
+          username: record.teacher_id.username,
+        },
+      }));
+
+      return {
+        AppointmentSummary: transformedData,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+  async getAllAppointments(paginationSearchDto: PaginationSearchDto) {
+    try {
+      const { page, limit, search } = paginationSearchDto;
+      const query = this.AppointmentRepository.createQueryBuilder('appointment');
+
+      if (search) {
+        query.where('appointment.student_id LIKE :search OR appointment.teacher_id LIKE :search', {
+          search: `%${search}%`,
+        });
+      }
+
+      const [result, total] = await query
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      const nextPage = page < totalPages ? page + 1 : null;
+      const previousPage = page > 1 ? page - 1 : null;
+
+      return {
+        data: result,
+        count: total,
+        totalPages,
+        currentPage: page,
+        nextPage,
+        previousPage,
       };
     } catch (error) {
       throw new BadRequestException(error.message);

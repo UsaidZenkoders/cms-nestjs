@@ -12,10 +12,15 @@ import { TeachersService } from 'src/teachers/teachers.service';
 import { StudentsService } from 'src/students/students.service';
 import { Student } from 'src/students/entities/student.entity';
 import { ImageUploadService } from 'src/image-upload/image-upload.service';
+import { Admin } from './entities/admin.entity';
+import { AppointmentService } from 'src/appointment/appointment.service';
+import { Appointment } from 'src/appointment/entities/appointment';
+import { MailService } from 'src/mail/mail.service';
+import { EnrolmentService } from 'src/enrolment/enrolment.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Course, whitelist, Enrolment, Teacher, Student]),
+    TypeOrmModule.forFeature([Course, whitelist, Enrolment, Teacher, Student,Admin,Appointment]),
   ],
   controllers: [AdminController],
   providers: [
@@ -25,6 +30,9 @@ import { ImageUploadService } from 'src/image-upload/image-upload.service';
     TeachersService,
     StudentsService,
     ImageUploadService,
+    AppointmentService,
+    MailService,
+    EnrolmentService
   ],
 })
 export class AdminModule {}

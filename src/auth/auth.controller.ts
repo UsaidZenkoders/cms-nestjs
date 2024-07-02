@@ -28,12 +28,10 @@ export class AuthController {
 
   @Post('/student/register')
   @HttpCode(HttpStatus.OK)
-  @UseInterceptors(FileInterceptor('image'))
   async createStudent(
     @Body(ValidationPipe) createStudentDto: CreateStudentDto,
-    @UploadedFile() image: Express.Multer.File,
   ) {
-    return await this.authService.studentSignUp(createStudentDto, image);
+    return await this.authService.studentSignUp(createStudentDto);
   }
 
   @Post('/student/register/verify-otp')
@@ -55,13 +53,11 @@ export class AuthController {
   // ADMIN AUTH  ROUTES
 
   @Post('/admin/register')
-  @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)
   async createAdmin(
     @Body(ValidationPipe) createAdminDto: CreateAdminDto,
-    @UploadedFile() image: Express.Multer.File,
   ) {
-    return await this.authService.adminSignup(createAdminDto, image);
+    return await this.authService.adminSignup(createAdminDto);
   }
 
   @Post('/admin/register/verify-otp')
@@ -82,13 +78,11 @@ export class AuthController {
   // TEACHER AUTH ROUTES
 
   @Post('/teacher/register')
-  @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)
   async createTeacher(
     @Body(ValidationPipe) createTeacherDto: CreateTeacherDto,
-    @UploadedFile() image: Express.Multer.File,
   ) {
-    return this.authService.teacherSignup(createTeacherDto, image);
+    return this.authService.teacherSignup(createTeacherDto);
   }
 
   @Post('/teacher/register/verify-otp')

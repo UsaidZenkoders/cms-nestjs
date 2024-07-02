@@ -35,26 +35,26 @@ export class StudentsController {
     private readonly appointmentService: AppointmentService,
   ) {}
 
-  @Post('/addEnrolment')
-  Create(@Body(ValidationPipe) createEnrolmentDto: CreateEnrolmentDto) {
-    return this.enrolmentService.Create(createEnrolmentDto);
+  @Post('/enrolment/create')
+  async Create(@Body(ValidationPipe) createEnrolmentDto: CreateEnrolmentDto, ) {
+    return await this.enrolmentService.Create(createEnrolmentDto);
   }
-  @Post('/dropCourse')
+  @Post('/enrolment/dropCourse')
   @HttpCode(HttpStatus.OK)
-  Drop(@Body(ValidationPipe) dropCourseDto: DropCourseDto) {
-    return this.enrolmentService.DropCourse(dropCourseDto);
+  async Drop(@Body(ValidationPipe) dropCourseDto: DropCourseDto) {
+    return await this.enrolmentService.DropCourse(dropCourseDto);
   }
-  @Post('/getEnrolmentsbyEmail')
+  @Get('/enrolment/:email')
   @HttpCode(HttpStatus.OK)
-  Post(@Body('email') email: string) {
-    return this.enrolmentService.GetAllEnrolments(email);
+  async Post(@Body('id') id: string) {
+    return await this.enrolmentService.getAllEnromentsbyId(id);
   }
-  @Patch('/updateProfile')
-  UpdateProfile(
+  @Patch('/updateProfile/:email')
+  async UpdateProfile(
     @Param('email') email: string,
     @Body() updateStudentDto: UpdateStudentDto,
   ) {
-    return this.studentService.updateStudentProfile(email, updateStudentDto);
+    return await this.studentService.updateStudentProfile(email, updateStudentDto);
   }
 
   @Get('/viewProfile/:email')
@@ -62,7 +62,7 @@ export class StudentsController {
     return await this.studentService.ViewProfileDetails(email);
   }
 
-  @Post('/updateStudentImage')
+  @Patch('/updateProfilePicture/:email')
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)
   async UpdatePicture(
@@ -71,10 +71,14 @@ export class StudentsController {
   ) {
     return await this.studentService.UpdateImage(email, image);
   }
-  @Post('/createAppointment')
+  @Post('/appointment/create')
   async CreateAppointment(
     @Body(ValidationPipe) createAppointmentDto: CreateAppointmentDto,
   ) {
     return await this.appointmentService.Create(createAppointmentDto);
+  }
+  @Get('/appointments/:email')
+  async getAppointments(@Param('email') email: string) {
+    return await this.appointmentService.getAppointmentsbyStudentId(email);
   }
 }

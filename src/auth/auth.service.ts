@@ -25,6 +25,7 @@ import { VerifyOtpDto } from 'src/otp/dto/verify-otp.dto';
 import { EmailsService } from 'src/emails/emails.service';
 import { WhitelistService } from 'src/whitelist/whitelist.service';
 import { Role } from 'src/enum/role.enum';
+import { getFormattedDate } from 'src/helpers/Date-formatter';
 
 @Injectable()
 export class AuthService {
@@ -36,16 +37,12 @@ export class AuthService {
     @InjectRepository(Admin)
     private AdminRepository: Repository<Admin>,
     private jwtService: JwtService,
-    private imageUploadService: ImageUploadService,
     private bcryptService: BcryptService,
     private otpService: OtpService,
     private EmailService: EmailsService,
     private whitelistService: WhitelistService,
   ) {}
-  async studentSignUp(
-    createStudentDto: CreateStudentDto,
-    image: Express.Multer.File,
-  ) {
+  async studentSignUp(createStudentDto: CreateStudentDto) {
     try {
       const existingUnverifiedStudent = await this.StudentsRepository.findOne({
         where: { email: createStudentDto.email, is_verified: false },
@@ -72,18 +69,17 @@ export class AuthService {
         throw new Error('This domain is not allowed');
       }
 
-      const imageUrl = await this.imageUploadService.uploadImage(image);
-
       const { password } = createStudentDto;
       const hashedPassword = await this.bcryptService.hash(password, 10);
       const otp = await this.otpService.generateOtp(createStudentDto.email);
       this.EmailService.createEmail(createStudentDto.email, 'STUDENT');
+      const formattedDate = getFormattedDate();
+
       const student = this.StudentsRepository.create({
         ...createStudentDto,
         password: hashedPassword,
-        img: imageUrl,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: formattedDate,
+        updated_at: formattedDate,
         is_verified: false,
       });
       await this.StudentsRepository.save(student);
@@ -101,10 +97,7 @@ export class AuthService {
     return this.otpService.verifyOtp(verifyOtpDto, 'student');
   }
 
-  async teacherSignup(
-    createTeacherDto: CreateTeacherDto,
-    image: Express.Multer.File,
-  ) {
+  async teacherSignup(createTeacherDto: CreateTeacherDto) {
     try {
       const existingUnverifiedTeacher = await this.TeachersRepository.findOne({
         where: { email: createTeacherDto.email, is_verified: false },
@@ -131,18 +124,18 @@ export class AuthService {
       if (!allowedDomain) {
         throw new Error('This domain is not allowed');
       }
-      const imageUrl = await this.imageUploadService.uploadImage(image);
 
       const { password } = createTeacherDto;
       const hashedPassword = await this.bcryptService.hash(password, 10);
       const otp = await this.otpService.generateOtp(createTeacherDto.email);
       this.EmailService.createEmail(createTeacherDto.email, 'TEACHER');
+      const formattedDate = getFormattedDate();
+
       const teacher = this.TeachersRepository.create({
         ...createTeacherDto,
         password: hashedPassword,
-        img: imageUrl,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: formattedDate,
+        updated_at: formattedDate,
         is_verified: false,
       });
       await this.TeachersRepository.save(teacher);
@@ -159,10 +152,7 @@ export class AuthService {
   async teacherOtpVerification(verifyOtpDto: VerifyOtpDto) {
     return this.otpService.verifyOtp(verifyOtpDto, 'teacher');
   }
-  async adminSignup(
-    createAdminDto: CreateAdminDto,
-    image: Express.Multer.File,
-  ) {
+  async adminSignup(createAdminDto: CreateAdminDto) {
     try {
       const existingUnverifiedAdmin = await this.AdminRepository.findOne({
         where: { email: createAdminDto.email, is_verified: false },
@@ -189,18 +179,17 @@ export class AuthService {
       if (!allowedDomain) {
         throw new Error('This domain is not allowed');
       }
-      const imageUrl = await this.imageUploadService.uploadImage(image);
 
       const { password } = createAdminDto;
       const hashedPassword = await this.bcryptService.hash(password, 10);
       const otp = await this.otpService.generateOtp(createAdminDto.email);
       this.EmailService.createEmail(createAdminDto.email, 'ADMIN');
+      const formattedDate = getFormattedDate();
       const admin = this.AdminRepository.create({
         ...createAdminDto,
         password: hashedPassword,
-        img: imageUrl,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: formattedDate,
+        updated_at: formattedDate,
         is_verified: false,
       });
 
@@ -262,6 +251,11 @@ export class AuthService {
     });
     if (!userwithEmail) {
       throw new UnauthorizedException('Teacher with this email doesnot exist');
+    }
+    if (userwithEmail.is_suspended) {
+      return {
+        message: 'You are suspended by the admin , cant login',
+      };
     }
     if (userwithEmail && userwithEmail.is_verified) {
       const { password } = loginTeacherDto;

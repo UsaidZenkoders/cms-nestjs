@@ -19,9 +19,6 @@ import { CreateChatRoomDto } from './dto/create-chatroom.dto';
 @WebSocketGateway()
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer()
-  server: Server;
-
   constructor(
     private readonly messageService: MessageService,
     private readonly chatRoomService: ChatRoomService,
@@ -51,8 +48,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log('Socket ID:', socketId);
       socket.join(roomId);
       console.log(`${socketId} has joined room ${roomId}`);
-
-      return { event: 'joinedRoom', data: roomId };
+      const messages=await this.messageService.getAllMessages(roomId)
+      console.log(messages)
+      socket.emit("message",{
+        history:messages
+      })
+      
     } catch (error) {
       this.handleError(error, socket);
     }
@@ -73,11 +74,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!senderExist || !receiverExist) {
         throw new BadRequestException('Invalid sender or reciever');
       }
-      const message = await this.messageService.createMessage(createMessageDto);
+      const Createdmessage = await this.messageService.createMessage(createMessageDto);
 
       client.to(createMessageDto.roomId).emit('message', {
         sentby: createMessageDto.senderId,
-        text: message.message.message,
+        text: Createdmessage.message,
       });
     } catch (error) {
       console.log(error);

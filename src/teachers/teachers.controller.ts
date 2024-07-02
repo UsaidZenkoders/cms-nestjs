@@ -13,9 +13,6 @@ import {
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
-import { CoursesService } from 'src/courses/courses.service';
-import { CreateCourseDto } from 'src/courses/dto/create-course.dto';
-import { UpdateCourseDto } from 'src/courses/dto/update-course.dto';
 import { Roles } from 'src/decorators/role.decorator';
 import { EnrolmentService } from 'src/enrolment/enrolment.service';
 import { Role } from 'src/enum/role.enum';
@@ -31,44 +28,28 @@ import { AppointmentService } from 'src/appointment/appointment.service';
 export class TeachersController {
   constructor(
     private readonly enrolmentsService: EnrolmentService,
-    private readonly courseService: CoursesService,
     private readonly teacherService: TeachersService,
     private readonly appointmentService: AppointmentService,
   ) {}
   @HttpCode(HttpStatus.OK)
-  @Post('/teachersEnrolment')
-  async getEnrolmentsbyEmail(@Body('email') email: string) {
+  @Post('/teachersEnrolment/:email')
+  async getEnrolmentsbyEmail(@Param('email') email: string) {
     return await this.enrolmentsService.GetAllEnrolmentsWithTeacher(email);
-  }
-
-  @Post('/addCourse')
-  async Create(@Body(ValidationPipe) createCourseDto: CreateCourseDto) {
-    return await this.courseService.create(createCourseDto);
-  }
-
-  @Patch('/updateCourse/:id')
-  async UpdateCourse(
-    @Param('id') id: string,
-    @Body(ValidationPipe) updateCourseDto: UpdateCourseDto,
-  ) {
-    return await this.courseService.updateCourse(id, updateCourseDto);
-  }
-
-  @Delete('/deleteCourse/:id')
-  async delete(@Param('id') id: string, @Body() email: string) {
-    return await this.courseService.deleteCourse(id, email);
   }
 
   @Patch('/updateProfile/:email')
   @HttpCode(HttpStatus.OK)
-  UpdateProfile(
+  async UpdateProfile(
     @Param('email') email: string,
     @Body(ValidationPipe) updatedTeacherDto: UpdateTeacherDto,
   ) {
-    return this.teacherService.updateTeacherProfile(email, updatedTeacherDto);
+    return await this.teacherService.updateTeacherProfile(
+      email,
+      updatedTeacherDto,
+    );
   }
 
-  @Post('/updateTeacherImage')
+  @Post('/updateProfilePicture')
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)
   async UpdatePicture(
@@ -91,6 +72,6 @@ export class TeachersController {
 
   @Get('/appointments/:email')
   async getAppointments(@Param('email') email: string) {
-    return await this.appointmentService.getAppointmentsbyId(email);
+    return await this.appointmentService.getAppointmentsbyTeacherId(email);
   }
 }

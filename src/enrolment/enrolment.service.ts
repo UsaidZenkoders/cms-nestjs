@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Enrolment } from './entities/enrolment.entity';
@@ -10,8 +6,8 @@ import { CreateEnrolmentDto } from './dto/create-enrolment.dto';
 import { Student } from 'src/students/entities/student.entity';
 import { Course } from 'src/courses/entities/course.entity';
 import { EnrolmentStatus } from 'src/enum/enrolment-status.enum';
-import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { DropCourseDto } from './dto/drop-course.dto';
+import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
 
 @Injectable()
 export class EnrolmentService {
@@ -22,8 +18,6 @@ export class EnrolmentService {
     private StudentRepository: Repository<Student>,
     @InjectRepository(Course)
     private CourseRepository: Repository<Course>,
-    @InjectRepository(Teacher)
-    private TeacherRepository: Repository<Teacher>,
   ) {}
 
   async Create(createEnrolmentDto: CreateEnrolmentDto) {
@@ -71,7 +65,7 @@ export class EnrolmentService {
       },
     };
   }
-  async GetAllEnrolments(email: string) {
+  async getAllEnromentsbyId(email: string) {
     const studentwithId = await this.StudentRepository.findOneBy({
       email: email,
     });
@@ -83,12 +77,46 @@ export class EnrolmentService {
         message: 'No enrolments to show',
       };
     }
-    return {
-      enrolments,
-    };
+    return enrolments;
+  }
+  async getAllEnrolments(paginationSearchDto: PaginationSearchDto) {
+    try {
+      const { page, limit, search } = paginationSearchDto;
+      const query = this.EnrolmentRepository.createQueryBuilder('enrolment');
+
+      if (search) {
+        query.where(
+          'enrolment.course_code ILIKE :search OR enrolment.teacher_id ILIKE :search ',
+          {
+            search: `%${search}%`.toLowerCase(),
+          },
+        );
+      }
+
+      const [result, total] = await query
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      const nextPage = page < totalPages ? page + 1 : null;
+      const previousPage = page > 1 ? page - 1 : null;
+
+      return {
+        data: result,
+        count: total,
+        totalPages,
+        currentPage: page,
+        nextPage,
+        previousPage,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
   async GetAllEnrolmentsWithTeacher(teacherEmail: string) {
     try {
+      // const teacher; //
+
       const studentsEnrolled =
         await this.EnrolmentRepository.createQueryBuilder('enrolment')
           .innerJoinAndSelect('enrolment.course_code', 'course')
@@ -99,6 +127,25 @@ export class EnrolmentService {
           })
           .getMany();
 
+        // await this.CourseRepository.find({
+        //   where: {
+        //     teacher_id: teacher.id,
+        //   },
+        //   select: {
+        //     enrolments: {
+        //       student_id: {
+        //         username: true,
+        //         email: true,
+        //       },
+        //     },
+        //   },
+        //   relations: {
+        //     enrolments: {
+        //       student_id: true,
+        //     },
+        //   },
+        // });
+
       if (!studentsEnrolled || studentsEnrolled.length === 0) {
         throw new BadRequestException(
           'No students enrolled in courses taught by this teacher',
@@ -108,7 +155,7 @@ export class EnrolmentService {
         enrolment: {
           id: enrolments.id,
           status: enrolments.status,
-          created_at: enrolments.created_at.toISOString().split('T')[0],
+          created_at: enrolments.created_at.toISOString(),
         },
         course_code: {
           code: enrolments.course_code.code,

@@ -38,7 +38,8 @@ export class OtpService {
       const otp = crypto.randomInt(100000, 999999).toString();
       console.log(`Generated OTP for ${email}: ${otp}`);
 
-      const validTill = new Date(Date.now() + 5 * 60 * 1000);
+      const FIVE_MINUTES = 5 * 60 * 1000
+      const validTill = new Date(Date.now() + FIVE_MINUTES);
 
       const newOtp = this.OtpRepository.create({
         user_id: email,
@@ -85,7 +86,7 @@ export class OtpService {
         throw new BadRequestException('Incorrect OTP');
       }
 
-      let user;
+      let user: Student | Teacher | Admin;
       switch (entityType) {
         case 'student':
           user = await this.StudentRepository.findOneBy({

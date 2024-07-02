@@ -48,11 +48,8 @@ export class MessageService {
 
         created_at: formattedDate,
       });
-      await this.MessagesRepository.save(message);
-      return {
-        success: 'Message created successfully',
-        message,
-      };
+      return await this.MessagesRepository.save(message);
+      
     } catch (error) {
       console.log(error.message);
       throw new BadRequestException(error.message);

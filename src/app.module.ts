@@ -31,6 +31,7 @@ import { Messages } from './message/entities/message.entity';
 import { StripeModule } from './stripe/stripe.module';
 import { ConfigModule } from '@nestjs/config';
 import { CartModule } from './cart/cart.module';
+import { Cart } from './cart/entities/cart.entity';
 @Module({
 
   imports: [
@@ -53,6 +54,7 @@ import { CartModule } from './cart/cart.module';
         Appointment,
         ChatRoom,
         Messages,
+        Cart
       ],
       synchronize: true,
     }),
