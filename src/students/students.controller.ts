@@ -12,6 +12,7 @@ import {
   UploadedFile,
   UseInterceptors,
   ParseIntPipe,
+  Req,
 } from '@nestjs/common';
 import { Roles } from 'src/decorators/role.decorator';
 import { CreateEnrolmentDto } from 'src/enrolment/dto/create-enrolment.dto';
@@ -25,6 +26,7 @@ import { StudentsService } from './students.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateAppointmentDto } from 'src/appointment/dto/create-appointment.dto';
 import { AppointmentService } from 'src/appointment/appointment.service';
+import { LoggedInUser } from 'src/decorators/logged-in-user.decorator';
 @UseGuards(AuthenticationGuard, AuthorizationGuard)
 @Roles(Role.student)
 @Controller('students')
@@ -36,7 +38,7 @@ export class StudentsController {
   ) {}
 
   @Post('/enrolment/create')
-  async Create(@Body(ValidationPipe) createEnrolmentDto: CreateEnrolmentDto, ) {
+  async Create(@Body(ValidationPipe) createEnrolmentDto: CreateEnrolmentDto) {
     return await this.enrolmentService.Create(createEnrolmentDto);
   }
   @Post('/enrolment/dropCourse')
@@ -44,30 +46,33 @@ export class StudentsController {
   async Drop(@Body(ValidationPipe) dropCourseDto: DropCourseDto) {
     return await this.enrolmentService.DropCourse(dropCourseDto);
   }
-  @Get('/enrolment/:email')
+  @Get('/enrolment')
   @HttpCode(HttpStatus.OK)
-  async Post(@Body('id') id: string) {
-    return await this.enrolmentService.getAllEnromentsbyId(id);
+  async Post(@LoggedInUser() email: string) {
+    return await this.enrolmentService.getAllEnromentsbyId(email);
   }
   @Patch('/updateProfile/:email')
   async UpdateProfile(
-    @Param('email') email: string,
-    @Body() updateStudentDto: UpdateStudentDto,
+    @LoggedInUser() email: string,
+    @Body(ValidationPipe) updateStudentDto: UpdateStudentDto,
   ) {
-    return await this.studentService.updateStudentProfile(email, updateStudentDto);
+    return await this.studentService.updateStudentProfile(
+      email,
+      updateStudentDto,
+    );
   }
 
-  @Get('/viewProfile/:email')
-  async ViewProfile(@Param('email') email: string) {
+  @Get('/viewProfile')
+  async ViewProfile(@LoggedInUser() email: string) {
     return await this.studentService.ViewProfileDetails(email);
   }
 
-  @Patch('/updateProfilePicture/:email')
+  @Patch('/updateProfilePicture')
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)
   async UpdatePicture(
-    @Param('email') email: string,
     @UploadedFile() image: Express.Multer.File,
+    @LoggedInUser() email: string,
   ) {
     return await this.studentService.UpdateImage(email, image);
   }
@@ -77,8 +82,8 @@ export class StudentsController {
   ) {
     return await this.appointmentService.Create(createAppointmentDto);
   }
-  @Get('/appointments/:email')
-  async getAppointments(@Param('email') email: string) {
+  @Get('/appointments')
+  async getAppointments(@LoggedInUser() email: string) {
     return await this.appointmentService.getAppointmentsbyStudentId(email);
   }
 }

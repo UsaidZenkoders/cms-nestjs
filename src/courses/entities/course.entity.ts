@@ -19,15 +19,21 @@ export class Course {
   name: string;
   @Column()
   description: string;
-
+  @Column()
+  price: number;
+  @Column({ type: 'enum', enum: CourseStatus, default: CourseStatus.free })
+  type: CourseStatus;
   @Column({ type: 'date' })
   deadline: Date;
   @Column({ type: 'timestamptz' })
   created_at: Date;
   @Column({ type: 'timestamptz' })
   updated_at: Date;
+
   @OneToMany(() => Enrolment, (enrolment) => enrolment.course_code)
   enrolments: Enrolment;
+  @ManyToOne(() => Cart, (cart) => cart.course_code)
+  cart: Cart;
   @ManyToOne(() => Teacher, (teacher) => teacher.courses, {
     onDelete: 'CASCADE',
   })

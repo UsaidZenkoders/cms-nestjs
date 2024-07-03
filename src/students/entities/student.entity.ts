@@ -1,7 +1,7 @@
 import { Appointment } from 'src/appointment/entities/appointment';
 import { ChatRoom } from 'src/chat-room/entities/chat-room.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
-import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 @Entity()
 export class Student {
   @PrimaryColumn()
@@ -34,10 +34,10 @@ export class Student {
   @Column({ default: false })
   is_verified: boolean;
 
-  @Column({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 
-  @Column({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 
   @OneToMany(() => Enrolment, (enrolment) => enrolment.student_id)

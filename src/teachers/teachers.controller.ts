@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -22,7 +23,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 import { AppointmentStatusDto } from 'src/appointment/dto/appointment-status.dto.';
 import { AppointmentService } from 'src/appointment/appointment.service';
+import { AuthenticationGuard } from 'src/guards/authentication.guard';
+import { AuthorizationGuard } from 'src/guards/authorization.guard';
+import { LoggedInUser } from 'src/decorators/logged-in-user.decorator';
 
+@UseGuards(AuthenticationGuard, AuthorizationGuard)
 @Roles(Role.teacher)
 @Controller('teachers')
 export class TeachersController {
@@ -32,15 +37,15 @@ export class TeachersController {
     private readonly appointmentService: AppointmentService,
   ) {}
   @HttpCode(HttpStatus.OK)
-  @Post('/teachersEnrolment/:email')
-  async getEnrolmentsbyEmail(@Param('email') email: string) {
+  @Post('/teachersEnrolment')
+  async getEnrolmentsbyEmail(@LoggedInUser() email:string) {
     return await this.enrolmentsService.GetAllEnrolmentsWithTeacher(email);
   }
 
-  @Patch('/updateProfile/:email')
+  @Patch('/updateProfile')
   @HttpCode(HttpStatus.OK)
   async UpdateProfile(
-    @Param('email') email: string,
+    @LoggedInUser() email:string,
     @Body(ValidationPipe) updatedTeacherDto: UpdateTeacherDto,
   ) {
     return await this.teacherService.updateTeacherProfile(
@@ -53,7 +58,7 @@ export class TeachersController {
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)
   async UpdatePicture(
-    @Param('email') email: string,
+    @LoggedInUser() email:string,
     @UploadedFile() image: Express.Multer.File,
   ) {
     return await this.teacherService.UpdateImage(email, image);
@@ -70,8 +75,8 @@ export class TeachersController {
     );
   }
 
-  @Get('/appointments/:email')
-  async getAppointments(@Param('email') email: string) {
+  @Get('/appointments')
+  async getAppointments(@LoggedInUser() email:string) {
     return await this.appointmentService.getAppointmentsbyTeacherId(email);
   }
 }

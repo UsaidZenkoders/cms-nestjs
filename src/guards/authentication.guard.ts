@@ -30,7 +30,9 @@ export class AuthenticationGuard implements CanActivate {
       });
 
       console.log('Decoded JWT:', decoded);
-      request.user = decoded;
+      request.user=decoded
+      console.log(request.user)
+      request['loggedInUserEmail'] = decoded.email;
       return true;
     } catch (error) {
       throw new UnauthorizedException(

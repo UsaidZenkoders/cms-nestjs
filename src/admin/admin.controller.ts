@@ -14,6 +14,8 @@ import {
   UseInterceptors,
   Delete,
   Patch,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { Roles } from 'src/decorators/role.decorator';
@@ -33,6 +35,7 @@ import { CoursesService } from 'src/courses/courses.service';
 import { AppointmentService } from 'src/appointment/appointment.service';
 import { EnrolmentService } from 'src/enrolment/enrolment.service';
 import { UpdateAdminDto } from './dto/update-admin.dto';
+import { LoggedInUser } from 'src/decorators/logged-in-user.decorator';
 
 @UseGuards(AuthenticationGuard, AuthorizationGuard)
 @Controller('admin')
@@ -48,11 +51,11 @@ export class AdminController {
     private readonly enrolmentService: EnrolmentService,
   ) {}
 
-  @Patch('/updateProfilePicture/:email')
+  @Patch('/updateProfilePicture')
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(HttpStatus.OK)
   async UpdatePicture(
-    @Param('email') email: string,
+    @LoggedInUser() email: string,
     @UploadedFile() image: Express.Multer.File,
   ) {
     return await this.adminService.UpdateImage(email, image);
@@ -69,7 +72,7 @@ export class AdminController {
     return await this.courseService.create(createCourseDto);
   }
 
-  @Patch('/course/:id/:email')
+  @Patch('/course/:id')
   async UpdateCourse(
     @Param('id') id: string,
 
@@ -111,15 +114,18 @@ export class AdminController {
   SuspendTeacher(@Param('email') email: string) {
     return this.adminService.SuspendTeacher(email);
   }
-  @Get('/viewProfile/:email')
-  async ViewProfile(@Param('email') email: string) {
+  @Get('/viewProfile')
+  async ViewProfile(@LoggedInUser() email: string) {
     return await this.adminService.ViewProfileDetails(email);
   }
-  @Patch('/updateProfile/:email')
+  @Patch('/updateProfile')
   async UpdateProfile(
-    @Param('email') email: string,
+    @LoggedInUser() email: string,
     @Body() updateAdminDto: UpdateAdminDto,
   ) {
-    return await this.studentService.updateStudentProfile(email, updateAdminDto);
+    return await this.studentService.updateStudentProfile(
+      email,
+      updateAdminDto,
+    );
   }
 }

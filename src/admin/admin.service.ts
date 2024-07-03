@@ -63,7 +63,7 @@ export class AdminService {
       throw new BadRequestException('admin doesnot exist');
     }
     const imageUrl = await this.imageUploadService.uploadImage(image);
-    await this.AdminRepository.save({ ...admin, img: imageUrl });
+    return await this.AdminRepository.save({ ...admin, img: imageUrl });
   }
   async ViewProfileDetails(email: string) {
     const adminProfile = await this.AdminRepository.findOneBy({

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -33,7 +33,6 @@ import { ConfigModule } from '@nestjs/config';
 import { CartModule } from './cart/cart.module';
 import { Cart } from './cart/entities/cart.entity';
 @Module({
-
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -54,12 +53,12 @@ import { Cart } from './cart/entities/cart.entity';
         Appointment,
         ChatRoom,
         Messages,
-        Cart
+        Cart,
       ],
       synchronize: true,
     }),
     ConfigModule.forRoot({
-      isGlobal:true
+      isGlobal: true,
     }),
 
     StudentsModule,
