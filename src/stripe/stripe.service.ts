@@ -1,24 +1,46 @@
-import { Injectable } from '@nestjs/common';
-import { Cart } from 'src/cart/entities/cart.entity';
+import { Injectable, Inject } from '@nestjs/common';
 import Stripe from 'stripe';
 
 @Injectable()
 export class StripeService {
-  private stripe;
-  constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+
+  private stripe:Stripe
+  constructor(
+  ) {
+    this.stripe = new Stripe('sk_test_51PXltD2MoZpvnciChgf4FDodHNzl54NRUKNoCzpHA99w4YSOPQlmJjnvUmUv4u4rV3ppm64QLcUJ2rzjXR2KwUf700uK4uVBJI', {
       apiVersion: '2024-06-20',
     });
   }
-  // checkout(cart: Cart[]) {
-  //   const totalPrice = cart.reduce(
-  //     (acc, item) => acc + item.quantity * item.price,
-  //     0,
-  //   );
-  //   return this.stripe.paymentIntents.create({
-  //       amount:totalPrice,
-  //       currency:'Rps',
-  //       payment_method_types:['card']
-  //   })
-  // }
-}
+  async createProductPrice(course_code:string,coursePrice:number):Promise<string>{
+    const price = await this.stripe.prices.create({
+      currency: 'usd',
+      unit_amount: coursePrice,
+      product_data:{
+         name:course_code
+    }});
+    console.log(price.id)
+    return price.id
+   
+  }
+  async createCheckoutSession(priceId:string) {
+    try {
+     
+      const session = await this.stripe.checkout.sessions.create({
+        success_url: 'https://example.com/success',
+        cancel_url: 'https://example.com/cancel',
+        
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price:priceId,
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+      });
+      return session.url;
+    } catch (error) {
+      // Handle any errors that occur during session creation
+      console.log(error)
+      throw new Error(`Failed to create Stripe checkout session: ${error.message}`)
+    }}}

@@ -1,14 +1,16 @@
-import { Cart } from 'src/cart/entities/cart.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { CourseStatus } from 'src/enum/course-status.enum';
+import { Payments } from 'src/payments/entities/payments.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -25,15 +27,15 @@ export class Course {
   type: CourseStatus;
   @Column({ type: 'date' })
   deadline: Date;
-  @Column({ type: 'timestamptz' })
+  @CreateDateColumn()
   created_at: Date;
-  @Column({ type: 'timestamptz' })
+  @UpdateDateColumn()
   updated_at: Date;
-
+  @OneToMany(() => Payments, (payment) => payment.course_code)
+  payments: Payments;
   @OneToMany(() => Enrolment, (enrolment) => enrolment.course_code)
   enrolments: Enrolment;
-  @ManyToOne(() => Cart, (cart) => cart.course_code)
-  cart: Cart;
+
   @ManyToOne(() => Teacher, (teacher) => teacher.courses, {
     onDelete: 'CASCADE',
   })

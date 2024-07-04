@@ -13,12 +13,14 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
+import { StripeService } from 'src/stripe/stripe.service';
 
 @Injectable()
 export class CoursesService {
   constructor(
     @InjectRepository(Course) private CourseRepository: Repository<Course>,
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
+    private readonly stripeService:StripeService
   ) {}
   async create(createCourseDto: CreateCourseDto) {
     try {
@@ -41,12 +43,9 @@ export class CoursesService {
           'Deadline must be greater than current date',
         );
       }
-
       const addedCourse = this.CourseRepository.create({
         ...createCourseDto,
         teacher_id: teacherWithId,
-        created_at: new Date(),
-        updated_at: new Date(),
       });
       await this.CourseRepository.save(addedCourse);
 
@@ -164,4 +163,5 @@ export class CoursesService {
       throw new InternalServerErrorException(error.messsage);
     }
   }
+
 }

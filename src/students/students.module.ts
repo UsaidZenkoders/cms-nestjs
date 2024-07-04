@@ -11,6 +11,7 @@ import { ImageUploadService } from 'src/image-upload/image-upload.service';
 import { AppointmentService } from 'src/appointment/appointment.service';
 import { Appointment } from 'src/appointment/entities/appointment';
 import { MailService } from 'src/mail/mail.service';
+import { StripeService } from 'src/stripe/stripe.service';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MailService } from 'src/mail/mail.service';
     ImageUploadService,
     AppointmentService,
     MailService,
+    StripeService
   ],
 })
 export class StudentsModule {}

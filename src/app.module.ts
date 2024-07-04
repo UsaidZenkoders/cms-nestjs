@@ -30,17 +30,24 @@ import { ChatRoom } from './chat-room/entities/chat-room.entity';
 import { Messages } from './message/entities/message.entity';
 import { StripeModule } from './stripe/stripe.module';
 import { ConfigModule } from '@nestjs/config';
-import { CartModule } from './cart/cart.module';
-import { Cart } from './cart/entities/cart.entity';
+import { PaymentsModule } from './payments/payments.module';
+import { Payments } from './payments/entities/payments.entity';
+
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      cache:true,
+      isGlobal: true,
+
+    
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'postgres',
-      password: 'usaid12.zenkoders',
-      database: 'cms',
+      username: process.env.DB_USERNAME,
+      password: process.env.PASSWORD,
+      database: process.env.DATABASE,
       entities: [
         Student,
         Teacher,
@@ -53,12 +60,9 @@ import { Cart } from './cart/entities/cart.entity';
         Appointment,
         ChatRoom,
         Messages,
-        Cart,
+        Payments,
       ],
       synchronize: true,
-    }),
-    ConfigModule.forRoot({
-      isGlobal: true,
     }),
 
     StudentsModule,
@@ -75,7 +79,7 @@ import { Cart } from './cart/entities/cart.entity';
     ChatRoomModule,
     MessageModule,
     StripeModule,
-    CartModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService, BcryptService],

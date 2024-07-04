@@ -8,6 +8,8 @@ import { Course } from 'src/courses/entities/course.entity';
 import { EnrolmentStatus } from 'src/enum/enrolment-status.enum';
 import { DropCourseDto } from './dto/drop-course.dto';
 import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
+import { StripeService } from 'src/stripe/stripe.service';
+import { CourseStatus } from 'src/enum/course-status.enum';
 
 @Injectable()
 export class EnrolmentService {
@@ -18,9 +20,11 @@ export class EnrolmentService {
     private StudentRepository: Repository<Student>,
     @InjectRepository(Course)
     private CourseRepository: Repository<Course>,
+    private stripeService: StripeService,
   ) {}
 
   async Create(createEnrolmentDto: CreateEnrolmentDto) {
+    console.log(process.env.STRIPE_SECRET_KEY)
     const studentwithId = await this.StudentRepository.findOneBy({
       email: createEnrolmentDto.student_id,
     });
@@ -33,37 +37,81 @@ export class EnrolmentService {
     if (!coursewithCode) {
       throw new BadRequestException('Course doesnot exist');
     }
-    const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
-      course_code: coursewithCode,
-      student_id: studentwithId,
-    });
-    console.log(alreadyEnrolledStudent);
-    if (alreadyEnrolledStudent) {
-      throw new BadRequestException(
-        'Student is already enrolled in this course',
-      );
+    if (coursewithCode.type === CourseStatus.free) {
+      const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
+        course_code: coursewithCode,
+        student_id: studentwithId,
+      });
+      console.log(alreadyEnrolledStudent);
+      if (alreadyEnrolledStudent) {
+        throw new BadRequestException(
+          'Student is already enrolled in this course',
+        );
+      }
+
+      if (new Date(coursewithCode.deadline) < new Date()) {
+        throw new BadRequestException('Deadline has been passed');
+      }
+
+      const enrolment = this.EnrolmentRepository.create({
+        student_id: studentwithId,
+        course_code: coursewithCode,
+        created_at: new Date(),
+        status: EnrolmentStatus.active,
+      });
+
+      await this.EnrolmentRepository.save(enrolment);
+      return {
+        message: 'Student enrolled successfully',
+        enrolment: {
+          enrolmentId: enrolment.id,
+          student: studentwithId,
+          course: coursewithCode,
+        },
+      };
     }
-
-    if (new Date(coursewithCode.deadline) < new Date()) {
-      throw new BadRequestException('Deadline has been passed');
+    const url = await this.BuyCourse(
+      createEnrolmentDto.course_code,
+      createEnrolmentDto.student_id,
+    );
+    if (url) {
+      return {
+        message:
+          'Checkout session created successfully , visit the url for payments',
+          url: url,
+      };
     }
-
-    const enrolment = this.EnrolmentRepository.create({
-      student_id: studentwithId,
-      course_code: coursewithCode,
-      created_at: new Date(),
-      status: EnrolmentStatus.active,
-    });
-
-    await this.EnrolmentRepository.save(enrolment);
-    return {
-      message: 'Student enrolled successfully',
-      enrolment: {
-        enrolmentId: enrolment.id,
-        student: studentwithId,
-        course: coursewithCode,
+    throw new BadRequestException('an error occured');
+  }
+  async BuyCourse(course_code: string, email: string) {
+    const courseExist = await this.CourseRepository.findOne({
+      where: {
+        code: course_code,
       },
-    };
+    });
+    const student = await this.StudentRepository.findOne({
+      where: {
+        email,
+      },
+    });
+    const alreadyPurchased = await this.EnrolmentRepository.findOne({
+      where: {
+        course_code: courseExist,
+        student_id: student,
+      },
+    });
+    if (alreadyPurchased) {
+      throw new BadRequestException('This course is already purchased');
+    }
+    const priceId = await this.stripeService.createProductPrice(
+      course_code,
+      courseExist.price,
+    );
+    if (!priceId) {
+      throw new Error('Error in generating price ');
+    }
+    const url = await this.stripeService.createCheckoutSession(priceId);
+    return url;
   }
   async getAllEnromentsbyId(email: string) {
     const studentwithId = await this.StudentRepository.findOneBy({
@@ -127,24 +175,24 @@ export class EnrolmentService {
           })
           .getMany();
 
-        // await this.CourseRepository.find({
-        //   where: {
-        //     teacher_id: teacher.id,
-        //   },
-        //   select: {
-        //     enrolments: {
-        //       student_id: {
-        //         username: true,
-        //         email: true,
-        //       },
-        //     },
-        //   },
-        //   relations: {
-        //     enrolments: {
-        //       student_id: true,
-        //     },
-        //   },
-        // });
+      // await this.CourseRepository.find({
+      //   where: {
+      //     teacher_id: teacher.id,
+      //   },
+      //   select: {
+      //     enrolments: {
+      //       student_id: {
+      //         username: true,
+      //         email: true,
+      //       },
+      //     },
+      //   },
+      //   relations: {
+      //     enrolments: {
+      //       student_id: true,
+      //     },
+      //   },
+      // });
 
       if (!studentsEnrolled || studentsEnrolled.length === 0) {
         throw new BadRequestException(

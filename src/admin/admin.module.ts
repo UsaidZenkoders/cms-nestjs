@@ -17,6 +17,7 @@ import { AppointmentService } from 'src/appointment/appointment.service';
 import { Appointment } from 'src/appointment/entities/appointment';
 import { MailService } from 'src/mail/mail.service';
 import { EnrolmentService } from 'src/enrolment/enrolment.service';
+import { StripeService } from 'src/stripe/stripe.service';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { EnrolmentService } from 'src/enrolment/enrolment.service';
     ImageUploadService,
     AppointmentService,
     MailService,
-    EnrolmentService
+    EnrolmentService,
+    StripeService
   ],
 })
 export class AdminModule {}

@@ -1,4 +1,4 @@
-import { IsDateString, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsDateString, IsEmail, IsEnum, IsInt, IsNotEmpty, IsString } from 'class-validator';
 import { CourseStatus } from 'src/enum/course-status.enum';
 
 export class CreateCourseDto {
@@ -11,6 +11,9 @@ export class CreateCourseDto {
   @IsString()
   @IsNotEmpty()
   description: string;
+  @IsInt()
+  @IsNotEmpty()
+  price: number;
   @IsEnum(CourseStatus)
   @IsNotEmpty()
   status: CourseStatus=CourseStatus.free
