@@ -19,15 +19,17 @@ export class Payments {
   @Column()
   session_id: string;
   @CreateDateColumn()
-  created_at:Date
+  created_at: Date;
   @UpdateDateColumn()
-  updated_at:Date
+  updated_at: Date;
+  @Column()
+  amount: number;
   @Column({
     type: 'enum',
     enum: PaymentStatus,
     default: PaymentStatus.pending,
   })
-  status:PaymentStatus
+  status: PaymentStatus;
   @ManyToOne(() => Student, (student) => student.payments)
   @JoinColumn({ name: 'student_id' })
   student_id: Student;

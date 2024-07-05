@@ -12,6 +12,7 @@ import { AppointmentService } from 'src/appointment/appointment.service';
 import { Appointment } from 'src/appointment/entities/appointment';
 import { MailService } from 'src/mail/mail.service';
 import { StripeService } from 'src/stripe/stripe.service';
+import { Payments } from 'src/payments/entities/payments.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { StripeService } from 'src/stripe/stripe.service';
       Course,
       Teacher,
       Appointment,
+      Payments
     ]),
   ],
   controllers: [StudentsController],

@@ -10,6 +10,8 @@ import { DropCourseDto } from './dto/drop-course.dto';
 import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
 import { StripeService } from 'src/stripe/stripe.service';
 import { CourseStatus } from 'src/enum/course-status.enum';
+import { Payments } from 'src/payments/entities/payments.entity';
+import { PaymentStatus } from 'src/enum/payment-status.enum';
 
 @Injectable()
 export class EnrolmentService {
@@ -20,6 +22,8 @@ export class EnrolmentService {
     private StudentRepository: Repository<Student>,
     @InjectRepository(Course)
     private CourseRepository: Repository<Course>,
+    @InjectRepository(  Payments)
+    private paymentRepository: Repository<Payments>,
     private stripeService: StripeService,
   ) {}
 
@@ -73,6 +77,7 @@ export class EnrolmentService {
     const url = await this.BuyCourse(
       createEnrolmentDto.course_code,
       createEnrolmentDto.student_id,
+    
     );
     if (url) {
       return {
@@ -94,6 +99,7 @@ export class EnrolmentService {
         email,
       },
     });
+    
     const alreadyPurchased = await this.EnrolmentRepository.findOne({
       where: {
         course_code: courseExist,
@@ -110,9 +116,31 @@ export class EnrolmentService {
     if (!priceId) {
       throw new Error('Error in generating price ');
     }
-    const url = await this.stripeService.createCheckoutSession(priceId);
-    return url;
+    const {code,name,description,price,type}=courseExist
+    const courseDetails={
+      code,
+      name,
+      description,
+      price,
+      type,
+      email
+      
+      
+    
+    }
+    const session = await this.stripeService.createCheckoutSession(priceId,courseDetails);
+    const payment= this.paymentRepository.create({
+      amount:session.amount_subtotal,
+      course_code:courseExist,
+      status:PaymentStatus.pending,
+      student_id:student,
+      session_id:session.id
+      
+    })
+    await this.paymentRepository.save(payment)
+    return session.url;
   }
+  
   async getAllEnromentsbyId(email: string) {
     const studentwithId = await this.StudentRepository.findOneBy({
       email: email,

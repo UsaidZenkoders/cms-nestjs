@@ -7,9 +7,10 @@ import { Course } from 'src/courses/entities/course.entity';
 import { Student } from 'src/students/entities/student.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { StripeService } from 'src/stripe/stripe.service';
+import { Payments } from 'src/payments/entities/payments.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Enrolment, Course, Student, Teacher])],
+  imports: [TypeOrmModule.forFeature([Enrolment, Course, Student, Teacher,Payments])],
   controllers: [EnrolmentController],
   providers: [EnrolmentService,StripeService],
 })

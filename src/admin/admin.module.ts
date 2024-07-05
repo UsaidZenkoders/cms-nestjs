@@ -18,10 +18,11 @@ import { Appointment } from 'src/appointment/entities/appointment';
 import { MailService } from 'src/mail/mail.service';
 import { EnrolmentService } from 'src/enrolment/enrolment.service';
 import { StripeService } from 'src/stripe/stripe.service';
+import { Payments } from 'src/payments/entities/payments.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Course, whitelist, Enrolment, Teacher, Student,Admin,Appointment]),
+    TypeOrmModule.forFeature([Course, whitelist, Enrolment, Teacher, Student,Admin,Appointment,Payments]),
   ],
   controllers: [AdminController],
   providers: [
