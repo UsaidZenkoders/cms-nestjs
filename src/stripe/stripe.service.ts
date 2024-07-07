@@ -8,10 +8,11 @@ import { Course } from 'src/courses/entities/course.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { EnrolmentStatus } from 'src/enum/enrolment-status.enum';
 import { PaymentStatus } from 'src/enum/payment-status.enum';
+import { MailService } from 'src/mail/mail.service';
 import { Payments } from 'src/payments/entities/payments.entity';
 import { Student } from 'src/students/entities/student.entity';
 import Stripe from 'stripe';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 interface MetaData {
   name: string;
   type: string;
@@ -31,6 +32,7 @@ export class StripeService {
     private enrolmentRepository: Repository<Enrolment>,
     @InjectRepository(Course) private courseRepository: Repository<Course>,
     @InjectRepository(Student) private studentRepository: Repository<Student>,
+    private readonly mailService: MailService,
   ) {
     this.stripe = new Stripe(
       'sk_test_51PXltD2MoZpvnciChgf4FDodHNzl54NRUKNoCzpHA99w4YSOPQlmJjnvUmUv4u4rV3ppm64QLcUJ2rzjXR2KwUf700uK4uVBJI',
@@ -104,6 +106,7 @@ export class StripeService {
     );
     // console.log(event.data);
     // console.log(event.type)
+    console.log('EVENT', event);
     switch (event.type) {
       case 'checkout.session.async_payment_failed':
         await this.handleAsyncPaymentFailed(event.data.object.id);
@@ -161,9 +164,30 @@ export class StripeService {
         throw new BadRequestException('Invalid payment ');
       }
       payment.status = PaymentStatus.paid;
-
+      await this.mailService.sendPurchaseCourseEmail(metaData);
       console.log(payment);
       await this.paymentsRepository.save(payment);
+      try {
+        const remainingPayments = await this.paymentsRepository.find({
+          where: {
+            student_id: student,
+            course_code: code,
+            session_id: Not(payment.session_id),
+          },
+          relations: ['student_id', 'course_code'],
+        });
+        console.log('Remaining', remainingPayments);
+
+        await Promise.all(
+          remainingPayments.map(async (pendingPayments) => {
+            pendingPayments.status = PaymentStatus.expired;
+            await this.paymentsRepository.save(pendingPayments);
+          }),
+        );
+      } catch (error) {
+        console.log(error.message);
+        throw new BadRequestException(error.message);
+      }
       const enrolment = this.enrolmentRepository.create({
         course_code: course,
         status: EnrolmentStatus.active,

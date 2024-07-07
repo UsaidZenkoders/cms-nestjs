@@ -162,5 +162,4 @@ export class CoursesService {
       throw new InternalServerErrorException(error.messsage);
     }
   }
-
 }

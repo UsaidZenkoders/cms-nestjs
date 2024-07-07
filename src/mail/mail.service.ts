@@ -9,6 +9,13 @@ interface AppointmentDetails {
     date: Date;
   };
 }
+interface MetaData {
+  code: string;
+  description: string;
+  type: string;
+  email: string;
+  name: string;
+}
 @Injectable()
 export class MailService {
   constructor(private readonly mailerService: MailerService) {}
@@ -55,6 +62,25 @@ export class MailService {
         text: 'Please view the details',
         html: `Response: <b>${message}<b>
          `,
+      });
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+  sendPurchaseCourseEmail(metaData: MetaData) {
+    try {
+      this.mailerService.sendMail({
+        to: metaData.email,
+        from: 'usaid12.zenkoders@gmail.com',
+        subject: 'Purchase Course Details',
+        text: 'Please view the details',
+        html: `<p>Purchased by  <b>${metaData.email}<b></p><br>
+        <b> Course Details </b><br>
+        Code: <b>${metaData.code}<b><br>
+        Name: <b>${metaData.name}<b><br>
+        Description: <b>${metaData.description}<b><br>
+        Type: <b>${metaData.type}<b><br>
+       `,
       });
     } catch (error) {
       throw new Error(error.message);

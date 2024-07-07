@@ -222,7 +222,7 @@ export class AppointmentService {
       });
       const studentRecord = await this.AppointmentRepository.find({
         where: { student_id: student },
-        relations: [ 'student_id'],
+        relations: ['student_id'],
       });
       const transformedData = studentRecord.map((record) => ({
         AppointmentDetails: {
@@ -252,12 +252,16 @@ export class AppointmentService {
   async getAllAppointments(paginationSearchDto: PaginationSearchDto) {
     try {
       const { page, limit, search } = paginationSearchDto;
-      const query = this.AppointmentRepository.createQueryBuilder('appointment');
+      const query =
+        this.AppointmentRepository.createQueryBuilder('appointment');
 
       if (search) {
-        query.where('appointment.student_id LIKE :search OR appointment.teacher_id LIKE :search', {
-          search: `%${search}%`,
-        });
+        query.where(
+          'appointment.student_id LIKE :search OR appointment.teacher_id LIKE :search',
+          {
+            search: `%${search}%`,
+          },
+        );
       }
 
       const [result, total] = await query
