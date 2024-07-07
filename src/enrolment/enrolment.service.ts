@@ -22,31 +22,33 @@ export class EnrolmentService {
     private StudentRepository: Repository<Student>,
     @InjectRepository(Course)
     private CourseRepository: Repository<Course>,
-    @InjectRepository(  Payments)
+    @InjectRepository(Payments)
     private paymentRepository: Repository<Payments>,
     private stripeService: StripeService,
   ) {}
 
   async Create(createEnrolmentDto: CreateEnrolmentDto) {
-    console.log(process.env.STRIPE_SECRET_KEY)
     const studentwithId = await this.StudentRepository.findOneBy({
       email: createEnrolmentDto.student_id,
     });
     const coursewithCode = await this.CourseRepository.findOneBy({
       code: createEnrolmentDto.course_code,
     });
+
     if (!studentwithId) {
-      throw new BadRequestException('Student with this id doesnot exist');
+      throw new BadRequestException('Student with this id does not exist');
     }
     if (!coursewithCode) {
-      throw new BadRequestException('Course doesnot exist');
+      throw new BadRequestException('Course does not exist');
     }
+
     if (coursewithCode.type === CourseStatus.free) {
       const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
         course_code: coursewithCode,
         student_id: studentwithId,
       });
-      console.log(alreadyEnrolledStudent);
+      console.log('Already Enrolled Student:', alreadyEnrolledStudent);
+
       if (alreadyEnrolledStudent) {
         throw new BadRequestException(
           'Student is already enrolled in this course',
@@ -54,7 +56,7 @@ export class EnrolmentService {
       }
 
       if (new Date(coursewithCode.deadline) < new Date()) {
-        throw new BadRequestException('Deadline has been passed');
+        throw new BadRequestException('Deadline has passed');
       }
 
       const enrolment = this.EnrolmentRepository.create({
@@ -74,16 +76,42 @@ export class EnrolmentService {
         },
       };
     }
-    const url = await this.BuyCourse(
+
+    console.log('Course with Code:', coursewithCode);
+    console.log('Student with ID:', studentwithId);
+
+    const alreadyPaidfortheCourse = await this.paymentRepository.findOne({
+      where: {
+        course_code: coursewithCode,
+        student_id: studentwithId,
+      },
+      relations: ['student_id', 'course_code'],
+    });
+
+    console.log('Already Paid for the Course:', alreadyPaidfortheCourse);
+
+    if (alreadyPaidfortheCourse) {
+      return {
+        message: 'This course is already purchased',
+        purchasedCourse: alreadyPaidfortheCourse,
+      };
+    }
+    if (alreadyPaidfortheCourse) {
+      return {
+        message: 'This course is already purchased',
+        purchasedCourse: alreadyPaidfortheCourse,
+      };
+    }
+    const session = await this.BuyCourse(
       createEnrolmentDto.course_code,
       createEnrolmentDto.student_id,
-    
     );
-    if (url) {
+
+    if (session.url) {
       return {
         message:
           'Checkout session created successfully , visit the url for payments',
-          url: url,
+        url: session.url,
       };
     }
     throw new BadRequestException('an error occured');
@@ -99,7 +127,7 @@ export class EnrolmentService {
         email,
       },
     });
-    
+
     const alreadyPurchased = await this.EnrolmentRepository.findOne({
       where: {
         course_code: courseExist,
@@ -116,31 +144,30 @@ export class EnrolmentService {
     if (!priceId) {
       throw new Error('Error in generating price ');
     }
-    const {code,name,description,price,type}=courseExist
-    const courseDetails={
+    const { code, name, description, price, type } = courseExist;
+    const courseDetails = {
       code,
       name,
       description,
       price,
       type,
-      email
-      
-      
-    
-    }
-    const session = await this.stripeService.createCheckoutSession(priceId,courseDetails);
-    const payment= this.paymentRepository.create({
-      amount:session.amount_subtotal,
-      course_code:courseExist,
-      status:PaymentStatus.pending,
-      student_id:student,
-      session_id:session.id
-      
-    })
-    await this.paymentRepository.save(payment)
-    return session.url;
+      email,
+    };
+    const session = await this.stripeService.createCheckoutSession(
+      priceId,
+      courseDetails,
+    );
+    const payment = this.paymentRepository.create({
+      amount: session.amount_subtotal,
+      course_code: courseExist,
+      status: PaymentStatus.pending,
+      student_id: student,
+      session_id: session.id,
+    });
+    await this.paymentRepository.save(payment);
+    return session;
   }
-  
+
   async getAllEnromentsbyId(email: string) {
     const studentwithId = await this.StudentRepository.findOneBy({
       email: email,

@@ -32,7 +32,7 @@ export class Course {
   @UpdateDateColumn()
   updated_at: Date;
   @OneToMany(() => Payments, (payment) => payment.course_code)
-  payments: Payments;
+  payments: Payments[];
   @OneToMany(() => Enrolment, (enrolment) => enrolment.course_code)
   enrolments: Enrolment;
 

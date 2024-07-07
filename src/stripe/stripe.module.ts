@@ -8,8 +8,8 @@ import { Course } from 'src/courses/entities/course.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Payments,Student,Course,Enrolment])],
+  imports: [TypeOrmModule.forFeature([Payments, Student, Course, Enrolment])],
   controllers: [StripeController],
-  providers: [StripeService]
+  providers: [StripeService],
 })
 export class StripeModule {}

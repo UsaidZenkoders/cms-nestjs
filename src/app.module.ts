@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -38,10 +43,8 @@ import { RawBodyMiddleware } from './middlewares/rawBody.middleware';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      cache:true,
+      cache: true,
       isGlobal: true,
-
-    
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -88,13 +91,13 @@ import { RawBodyMiddleware } from './middlewares/rawBody.middleware';
 })
 export class AppModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
-      consumer
-          .apply(RawBodyMiddleware)
-          .forRoutes({
-              path: '/stripe/webhook',
-              method: RequestMethod.POST,
-          })
-          .apply(JsonBodyMiddleware)
-          .forRoutes('*');
+    consumer
+      .apply(RawBodyMiddleware)
+      .forRoutes({
+        path: '/stripe/webhook',
+        method: RequestMethod.POST,
+      })
+      .apply(JsonBodyMiddleware)
+      .forRoutes('*');
   }
 }

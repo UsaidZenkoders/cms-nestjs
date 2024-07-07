@@ -20,7 +20,6 @@ export class CoursesService {
   constructor(
     @InjectRepository(Course) private CourseRepository: Repository<Course>,
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
-    private readonly stripeService:StripeService
   ) {}
   async create(createCourseDto: CreateCourseDto) {
     try {

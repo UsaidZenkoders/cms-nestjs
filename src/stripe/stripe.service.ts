@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Inject,
   RawBodyRequest,
   BadRequestException,
 } from '@nestjs/common';
@@ -13,6 +12,13 @@ import { Payments } from 'src/payments/entities/payments.entity';
 import { Student } from 'src/students/entities/student.entity';
 import Stripe from 'stripe';
 import { Repository } from 'typeorm';
+interface MetaData {
+  name: string;
+  type: string;
+  code: string;
+  description: string;
+  email: string;
+}
 
 @Injectable()
 export class StripeService {
@@ -47,16 +53,16 @@ export class StripeService {
     console.log(price.id);
     return price.id;
   }
-  async createCheckoutSession(priceId: string, metadata: any) {
+  async createCheckoutSession(priceId: string, metadata: MetaData) {
     try {
-      const { code, name, description, price, type, email } = metadata;
+      const { code, name, description, type, email } = metadata;
+      console.log(code, name);
       const session = await this.stripe.checkout.sessions.create({
         success_url: 'https://example.com/success',
         cancel_url: 'https://example.com/cancel',
         metadata: {
           code,
           description,
-          price,
           type,
           email,
           name,
@@ -70,6 +76,8 @@ export class StripeService {
         ],
         mode: 'payment',
       });
+      // console.log('METADATA', session);
+      console.log(session.id);
       return session;
     } catch (error) {
       // Handle any errors that occur during session creation
@@ -94,13 +102,16 @@ export class StripeService {
       signature,
       secret,
     );
-    console.log(event.type)
+    // console.log(event.data);
+    // console.log(event.type)
     switch (event.type) {
       case 'checkout.session.async_payment_failed':
-        return await this.handleAsyncPaymentFailed(event.data.object.id);
-
-      case 'checkout.session.async_payment_succeeded':
-        return await this.handleAsyncPaymentSucceeded(
+        await this.handleAsyncPaymentFailed(event.data.object.id);
+        break;
+      case 'checkout.session.completed':
+        console.log('SUCCEEDED', event.data.object.metadata);
+        console.log(event.data.object.id);
+        await this.handleAsyncPaymentSucceeded(
           event.data.object.id,
           event.data.object.metadata,
         );
@@ -133,28 +144,34 @@ export class StripeService {
     metaData: any,
   ): Promise<{ recieved: boolean } | { recieved: boolean }> {
     try {
-      const { course_code, student_id } = metaData;
+      console.log('Inside payment succeeded', metaData);
+      const { code, email } = metaData;
+      console.log(code);
       const course = await this.courseRepository.findOne({
-        where: { code: course_code },
+        where: { code: code },
       });
       const student = await this.studentRepository.findOne({
-        where: { email: student_id },
+        where: { email: email },
       });
       const payment = await this.paymentsRepository.findOne({
         where: { session_id: sessionId },
       });
+      console.log(payment);
       if (!payment) {
         throw new BadRequestException('Invalid payment ');
       }
       payment.status = PaymentStatus.paid;
+
+      console.log(payment);
+      await this.paymentsRepository.save(payment);
       const enrolment = this.enrolmentRepository.create({
         course_code: course,
         status: EnrolmentStatus.active,
         student_id: student,
       });
       await this.enrolmentRepository.save(enrolment);
+      console.log(enrolment);
 
-      await this.paymentsRepository.save(payment);
       console.log('PAYMENT', payment);
       console.log('ENROLMENT', enrolment);
 
