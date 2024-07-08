@@ -69,6 +69,7 @@ export class MailService {
   }
   sendPurchaseCourseEmail(metaData: MetaData) {
     try {
+      console.log("In mail service",metaData.email)
       this.mailerService.sendMail({
         to: metaData.email,
         from: 'usaid12.zenkoders@gmail.com',

@@ -21,7 +21,7 @@ export class Course {
   name: string;
   @Column()
   description: string;
-  @Column()
+  @Column({nullable:true})
   price: number;
   @Column({ type: 'enum', enum: CourseStatus, default: CourseStatus.free })
   type: CourseStatus;

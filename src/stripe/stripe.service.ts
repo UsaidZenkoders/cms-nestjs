@@ -62,20 +62,15 @@ export class StripeService {
       const session = await this.stripe.checkout.sessions.create({
         success_url: 'https://example.com/success',
         cancel_url: 'https://example.com/cancel',
-        metadata: {
-          code,
-          description,
-          type,
-          email,
-          name,
-        },
         payment_method_types: ['card'],
+        metadata: { code, description, type, email, name },
         line_items: [
           {
             price: priceId,
             quantity: 1,
           },
         ],
+
         mode: 'payment',
       });
       // console.log('METADATA', session);
@@ -89,11 +84,11 @@ export class StripeService {
       );
     }
   }
-  async retrieveSession() {}
+
   async createWebHook(
     payload: RawBodyRequest<Request>['rawBody'],
     signature: string,
-  ): Promise<{ recieved: boolean }> {
+  ) {
     if (!signature) {
       throw new BadRequestException('Signature not found');
     }
@@ -104,28 +99,21 @@ export class StripeService {
       signature,
       secret,
     );
-    // console.log(event.data);
-    // console.log(event.type)
-    console.log('EVENT', event);
     switch (event.type) {
-      case 'checkout.session.async_payment_failed':
-        await this.handleAsyncPaymentFailed(event.data.object.id);
-        break;
       case 'checkout.session.completed':
-        console.log('SUCCEEDED', event.data.object.metadata);
-        console.log(event.data.object.id);
+        console.log(event.data.object.metadata);
         await this.handleAsyncPaymentSucceeded(
           event.data.object.id,
           event.data.object.metadata,
+          event.data.object.payment_status,
         );
 
-      case 'checkout.session.expired':
-        return await this.handleAsyncPaymentExpired(event.data.object.id);
+      default:
+        console.log('default');
     }
   }
-  async handleAsyncPaymentFailed(
-    sessionId: string,
-  ): Promise<{ recieved: boolean } | { recieved: boolean }> {
+
+  async handleAsyncPaymentFailed(sessionId: string) {
     try {
       const payment = await this.paymentsRepository.findOne({
         where: { session_id: sessionId },
@@ -135,21 +123,23 @@ export class StripeService {
       }
       payment.status = PaymentStatus.failed;
       await this.paymentsRepository.save(payment);
-      console.log(payment);
-
-      return;
     } catch (error) {
+      console.log(error.message);
+
       throw new BadRequestException(error.message);
     }
   }
+
   async handleAsyncPaymentSucceeded(
     sessionId: string,
     metaData: any,
-  ): Promise<{ recieved: boolean } | { recieved: boolean }> {
+    payment_status: string,
+  ) {
     try {
       console.log('Inside payment succeeded', metaData);
+      console.log('Payment succeeded sessionId', sessionId);
+      console.log('Payment status ', payment_status);
       const { code, email } = metaData;
-      console.log(code);
       const course = await this.courseRepository.findOne({
         where: { code: code },
       });
@@ -159,19 +149,30 @@ export class StripeService {
       const payment = await this.paymentsRepository.findOne({
         where: { session_id: sessionId },
       });
-      console.log(payment);
       if (!payment) {
         throw new BadRequestException('Invalid payment ');
       }
-      payment.status = PaymentStatus.paid;
-      await this.mailService.sendPurchaseCourseEmail(metaData);
-      console.log(payment);
-      await this.paymentsRepository.save(payment);
-      try {
+
+      const alreadyPurchased = await this.enrolmentRepository.findOne({
+        where: {
+          course_code: course,
+          student_id: student,
+        },
+      });
+      if (alreadyPurchased) {
+        throw new BadRequestException('This course is already purchased');
+      }
+      console.log('Handle succeeded payment', payment);
+      if (payment_status === 'paid') {
+        payment.status = PaymentStatus.paid;
+        console.log('MetaData:', metaData);
+        this.mailService.sendPurchaseCourseEmail(metaData);
+        await this.paymentsRepository.save(payment);
+
         const remainingPayments = await this.paymentsRepository.find({
           where: {
             student_id: student,
-            course_code: code,
+            course_code: course,
             session_id: Not(payment.session_id),
           },
           relations: ['student_id', 'course_code'],
@@ -184,53 +185,41 @@ export class StripeService {
             await this.paymentsRepository.save(pendingPayments);
           }),
         );
-      } catch (error) {
-        console.log(error.message);
-        throw new BadRequestException(error.message);
-      }
-      const enrolment = this.enrolmentRepository.create({
-        course_code: course,
-        status: EnrolmentStatus.active,
-        student_id: student,
-      });
-      await this.enrolmentRepository.save(enrolment);
-      console.log(enrolment);
 
-      console.log('PAYMENT', payment);
-      console.log('ENROLMENT', enrolment);
-
-      return;
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
-  }
-  async handleAsyncPaymentExpired(
-    sessionId: string,
-  ): Promise<{ recieved: boolean } | { recieved: boolean }> {
-    try {
-      const payment = await this.paymentsRepository.findOne({
-        where: { session_id: sessionId },
-      });
-      if (!payment) {
-        throw new BadRequestException('Invalid payment ');
+        const enrolment = this.enrolmentRepository.create({
+          course_code: course,
+          status: EnrolmentStatus.active,
+          student_id: student,
+        });
+        await this.enrolmentRepository.save(enrolment);
+        console.log('Succeeded enrolment', enrolment);
+        return;
       }
-      payment.status = PaymentStatus.expired;
+      payment.status = PaymentStatus.failed;
       await this.paymentsRepository.save(payment);
-      console.log(payment);
-      return;
+      console.log('failed');
     } catch (error) {
+      console.log(error);
+      console.log(error.message);
       throw new BadRequestException(error.message);
     }
   }
-  async createWebhookEndpoint() {
-    const endpoint = await this.stripe.webhookEndpoints.create({
-      url: 'http://localhost:3000/stripe/webooks',
-      enabled_events: [
-        'checkout.session.async_payment_failed',
-        'checkout.session.expired',
-        'checkout.session.completed',
-      ],
-    });
-    return endpoint;
-  }
+
+  // async handleSessionCompleted(sessionId: string) {
+  //   try {
+  //     console.log('SessionId', sessionId);
+  //     const payment = await this.paymentsRepository.findOne({
+  //       where: { session_id: sessionId },
+  //     });
+  //     if (!payment) {
+  //       throw new BadRequestException('Invalid payment ');
+  //     }
+  //     payment.status = PaymentStatus.expired;
+  //     await this.paymentsRepository.save(payment);
+  //     console.log(payment);
+  //   } catch (error) {
+  //     console.log(error.message);
+  //     throw new BadRequestException(error.message);
+  //   }
+  // }
 }

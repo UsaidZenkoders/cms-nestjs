@@ -41,12 +41,11 @@ export class EnrolmentService {
     if (!coursewithCode) {
       throw new BadRequestException('Course does not exist');
     }
-
+    const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
+      course_code: coursewithCode,
+      student_id: studentwithId,
+    });
     if (coursewithCode.type === CourseStatus.free) {
-      const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
-        course_code: coursewithCode,
-        student_id: studentwithId,
-      });
       console.log('Already Enrolled Student:', alreadyEnrolledStudent);
 
       if (alreadyEnrolledStudent) {
@@ -77,31 +76,6 @@ export class EnrolmentService {
       };
     }
 
-    console.log('Course with Code:', coursewithCode);
-    console.log('Student with ID:', studentwithId);
-
-    const alreadyPaidfortheCourse = await this.paymentRepository.findOne({
-      where: {
-        course_code: coursewithCode,
-        student_id: studentwithId,
-      },
-      relations: ['student_id', 'course_code'],
-    });
-
-    console.log('Already Paid for the Course:', alreadyPaidfortheCourse);
-
-    if (alreadyPaidfortheCourse) {
-      return {
-        message: 'This course is already purchased',
-        purchasedCourse: alreadyPaidfortheCourse,
-      };
-    }
-    if (alreadyPaidfortheCourse) {
-      return {
-        message: 'This course is already purchased',
-        purchasedCourse: alreadyPaidfortheCourse,
-      };
-    }
     const session = await this.BuyCourse(
       createEnrolmentDto.course_code,
       createEnrolmentDto.student_id,
@@ -128,15 +102,6 @@ export class EnrolmentService {
       },
     });
 
-    const alreadyPurchased = await this.EnrolmentRepository.findOne({
-      where: {
-        course_code: courseExist,
-        student_id: student,
-      },
-    });
-    if (alreadyPurchased) {
-      throw new BadRequestException('This course is already purchased');
-    }
     const priceId = await this.stripeService.createProductPrice(
       course_code,
       courseExist.price,

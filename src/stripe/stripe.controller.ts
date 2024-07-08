@@ -15,11 +15,7 @@ export class StripeController {
   async webhook(
     @Headers('stripe-signature') sig: string,
     @Req() req: RawBodyRequest<Request>,
-  ): Promise<{ recieved: boolean }> {
+  ) {
     return await this.stripeService.createWebHook(req.rawBody, sig);
-  }
-  @Post('/webhook_endpoint')
-  async createEndpoint() {
-    return await this.stripeService.createWebhookEndpoint();
   }
 }

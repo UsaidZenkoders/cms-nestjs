@@ -3,10 +3,12 @@ import { EnrolmentStatus } from 'src/enum/enrolment-status.enum';
 import { Student } from 'src/students/entities/student.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -19,8 +21,10 @@ export class Enrolment {
     default: EnrolmentStatus.active,
   })
   status: EnrolmentStatus;
-  @Column({ type: 'timestamptz' })
+  @CreateDateColumn()
   created_at: Date;
+  @UpdateDateColumn()
+  updated_at: Date;
 
   // MANY ENROLMENTS BELONG TO ONE COURSE
   @ManyToOne(() => Course, (course) => course.enrolments, {
