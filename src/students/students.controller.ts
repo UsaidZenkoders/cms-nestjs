@@ -39,7 +39,7 @@ export class StudentsController {
 
   @Post('/enrolment/create')
   async Create(@Body(ValidationPipe) createEnrolmentDto: CreateEnrolmentDto) {
-    return await this.enrolmentService.Create(createEnrolmentDto);
+    return await this.enrolmentService.CreateEnrolment(createEnrolmentDto);
   }
   @Post('/enrolment/dropCourse')
   @HttpCode(HttpStatus.OK)

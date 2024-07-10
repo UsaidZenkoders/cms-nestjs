@@ -17,7 +17,7 @@ export class Payments {
   @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column()
-  session_id: string;
+  intent_id: string;
   @CreateDateColumn()
   created_at: Date;
   @UpdateDateColumn()

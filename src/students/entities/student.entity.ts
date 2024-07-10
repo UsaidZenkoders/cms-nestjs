@@ -51,7 +51,7 @@ export class Student {
   @OneToMany(() => Enrolment, (enrolment) => enrolment.student_id)
   enrolments: Enrolment;
   @OneToMany(() => Payments, (payment) => payment.student_id)
-  payments: Payments[];
+  payments: Payments;
   @OneToMany(() => Appointment, (appointments) => appointments.student_id)
   appointments: Appointment;
   @OneToMany(() => ChatRoom, (chat) => chat.student_id)

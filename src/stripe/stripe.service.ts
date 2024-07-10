@@ -3,6 +3,7 @@ import {
   RawBodyRequest,
   BadRequestException,
 } from '@nestjs/common';
+import { IntersectionType } from '@nestjs/mapped-types';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from 'src/courses/entities/course.entity';
 import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
@@ -19,6 +20,7 @@ interface MetaData {
   code: string;
   description: string;
   email: string;
+  stringedPrice: string;
 }
 
 @Injectable()
@@ -57,27 +59,26 @@ export class StripeService {
   }
   async createCheckoutSession(priceId: string, metadata: MetaData) {
     try {
-      const { code, name, description, type, email } = metadata;
+      const { code, name, description, type, email, stringedPrice } = metadata;
       console.log(code, name);
       const session = await this.stripe.checkout.sessions.create({
         success_url: 'https://example.com/success',
         cancel_url: 'https://example.com/cancel',
         payment_method_types: ['card'],
-        metadata: { code, description, type, email, name },
         line_items: [
           {
             price: priceId,
             quantity: 1,
           },
         ],
+        payment_intent_data: {
+          metadata: { code, description, type, email, name, stringedPrice },
+        },
 
         mode: 'payment',
       });
-      // console.log('METADATA', session);
-      console.log(session.id);
       return session;
     } catch (error) {
-      // Handle any errors that occur during session creation
       console.log(error);
       throw new Error(
         `Failed to create Stripe checkout session: ${error.message}`,
@@ -99,127 +100,100 @@ export class StripeService {
       signature,
       secret,
     );
+    console.log(event.type);
     switch (event.type) {
-      case 'checkout.session.completed':
-        console.log(event.data.object.metadata);
+      case 'payment_intent.succeeded':
+        console.log('Meta data on', event.data.object.metadata);
         await this.handleAsyncPaymentSucceeded(
           event.data.object.id,
           event.data.object.metadata,
-          event.data.object.payment_status,
         );
-
+        break;
+      case 'payment_intent.created':
+        await this.handleAsyncPaymentCreated(
+          event.data.object.id,
+          event.data.object.metadata,
+        );
+        break;
+      case 'payment_intent.payment_failed':
+        await this.handleAsyncPaymentFailed(event.data.object.id);
+        break;
       default:
         console.log('default');
     }
   }
 
-  async handleAsyncPaymentFailed(sessionId: string) {
+  async handleAsyncPaymentSucceeded(intent_id: string, metaData: any) {
     try {
-      const payment = await this.paymentsRepository.findOne({
-        where: { session_id: sessionId },
-      });
-      if (!payment) {
-        throw new BadRequestException('Invalid payment ');
-      }
-      payment.status = PaymentStatus.failed;
-      await this.paymentsRepository.save(payment);
-    } catch (error) {
-      console.log(error.message);
-
-      throw new BadRequestException(error.message);
-    }
-  }
-
-  async handleAsyncPaymentSucceeded(
-    sessionId: string,
-    metaData: any,
-    payment_status: string,
-  ) {
-    try {
-      console.log('Inside payment succeeded', metaData);
-      console.log('Payment succeeded sessionId', sessionId);
-      console.log('Payment status ', payment_status);
       const { code, email } = metaData;
+      console.log(intent_id);
       const course = await this.courseRepository.findOne({
         where: { code: code },
       });
       const student = await this.studentRepository.findOne({
         where: { email: email },
       });
-      const payment = await this.paymentsRepository.findOne({
-        where: { session_id: sessionId },
-      });
-      if (!payment) {
-        throw new BadRequestException('Invalid payment ');
-      }
-
-      const alreadyPurchased = await this.enrolmentRepository.findOne({
-        where: {
-          course_code: course,
-          student_id: student,
-        },
-      });
-      if (alreadyPurchased) {
-        throw new BadRequestException('This course is already purchased');
-      }
-      console.log('Handle succeeded payment', payment);
-      if (payment_status === 'paid') {
+      setTimeout(async () => {
+        const payment = await this.paymentsRepository.findOne({
+          where: { intent_id },
+        });
+        if (!payment) {
+          throw new BadRequestException('Invalid payment ');
+        }
         payment.status = PaymentStatus.paid;
         console.log('MetaData:', metaData);
         this.mailService.sendPurchaseCourseEmail(metaData);
         await this.paymentsRepository.save(payment);
+      }, 2000);
 
-        const remainingPayments = await this.paymentsRepository.find({
-          where: {
-            student_id: student,
-            course_code: course,
-            session_id: Not(payment.session_id),
-          },
-          relations: ['student_id', 'course_code'],
-        });
-        console.log('Remaining', remainingPayments);
-
-        await Promise.all(
-          remainingPayments.map(async (pendingPayments) => {
-            pendingPayments.status = PaymentStatus.expired;
-            await this.paymentsRepository.save(pendingPayments);
-          }),
-        );
-
-        const enrolment = this.enrolmentRepository.create({
-          course_code: course,
-          status: EnrolmentStatus.active,
-          student_id: student,
-        });
-        await this.enrolmentRepository.save(enrolment);
-        console.log('Succeeded enrolment', enrolment);
-        return;
-      }
-      payment.status = PaymentStatus.failed;
-      await this.paymentsRepository.save(payment);
-      console.log('failed');
+      const enrolment = this.enrolmentRepository.create({
+        course_code: course,
+        status: EnrolmentStatus.active,
+        student_id: student,
+      });
+      await this.enrolmentRepository.save(enrolment);
+      console.log('Succeeded enrolment', enrolment);
+      return;
     } catch (error) {
-      console.log(error);
       console.log(error.message);
       throw new BadRequestException(error.message);
     }
   }
 
-  // async handleSessionCompleted(sessionId: string) {
-  //   try {
-  //     console.log('SessionId', sessionId);
-  //     const payment = await this.paymentsRepository.findOne({
-  //       where: { session_id: sessionId },
-  //     });
-  //     if (!payment) {
-  //       throw new BadRequestException('Invalid payment ');
-  //     }
-  //     payment.status = PaymentStatus.expired;
-  //     await this.paymentsRepository.save(payment);
-  //     console.log(payment);
-  //   } catch (error) {
-  //     console.log(error.message);
-  //     throw new BadRequestException(error.message);
-  //   }
-  // }
+  async handleAsyncPaymentFailed(intentId: string) {
+    try {
+      console.log('Intent Id', intentId);
+      setTimeout(async () => {
+        const payment = await this.paymentsRepository.findOne({
+          where: { intent_id: intentId },
+        });
+        if (!payment) {
+          throw new BadRequestException('Invalid payment ');
+        }
+        payment.status = PaymentStatus.failed;
+        await this.paymentsRepository.save(payment);
+      }, 2000);
+    } catch (error) {
+      console.log(error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+  async handleAsyncPaymentCreated(intentId: string, metaData: any) {
+    const { code, email, stringedPrice } = metaData;
+    console.log('Created', metaData);
+    const course = await this.courseRepository.findOne({
+      where: { code: code },
+    });
+    const student = await this.studentRepository.findOne({
+      where: { email: email },
+    });
+    const payment = this.paymentsRepository.create({
+      amount: parseInt(stringedPrice),
+      course_code: course,
+      intent_id: intentId,
+      student_id: student,
+      status: PaymentStatus.pending,
+    });
+    await this.paymentsRepository.save(payment);
+  }
 }

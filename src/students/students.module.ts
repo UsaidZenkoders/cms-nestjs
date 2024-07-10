@@ -13,6 +13,7 @@ import { Appointment } from 'src/appointment/entities/appointment';
 import { MailService } from 'src/mail/mail.service';
 import { StripeService } from 'src/stripe/stripe.service';
 import { Payments } from 'src/payments/entities/payments.entity';
+import { CoursesService } from 'src/courses/courses.service';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Payments } from 'src/payments/entities/payments.entity';
     ImageUploadService,
     AppointmentService,
     MailService,
+    CoursesService,
     StripeService
   ],
 })

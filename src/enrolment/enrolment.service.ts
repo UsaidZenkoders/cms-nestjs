@@ -8,52 +8,44 @@ import { Course } from 'src/courses/entities/course.entity';
 import { EnrolmentStatus } from 'src/enum/enrolment-status.enum';
 import { DropCourseDto } from './dto/drop-course.dto';
 import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
-import { StripeService } from 'src/stripe/stripe.service';
 import { CourseStatus } from 'src/enum/course-status.enum';
-import { Payments } from 'src/payments/entities/payments.entity';
-import { PaymentStatus } from 'src/enum/payment-status.enum';
+import { CoursesService } from 'src/courses/courses.service';
+import { StudentsService } from 'src/students/students.service';
 
 @Injectable()
 export class EnrolmentService {
   constructor(
-    @InjectRepository(Enrolment)
-    private EnrolmentRepository: Repository<Enrolment>,
     @InjectRepository(Student)
     private StudentRepository: Repository<Student>,
+    @InjectRepository(Enrolment)
+    private EnrolmentRepository: Repository<Enrolment>,
     @InjectRepository(Course)
     private CourseRepository: Repository<Course>,
-    @InjectRepository(Payments)
-    private paymentRepository: Repository<Payments>,
-    private stripeService: StripeService,
+    private readonly courseService: CoursesService,
+    private readonly studentService: StudentsService,
   ) {}
 
-  async Create(createEnrolmentDto: CreateEnrolmentDto) {
-    const studentwithId = await this.StudentRepository.findOneBy({
-      email: createEnrolmentDto.student_id,
+  async CreateEnrolment(createEnrolmentDto: CreateEnrolmentDto) {
+    const coursewithCode = await this.courseService.getCourseByCode(
+      createEnrolmentDto.course_code,
+    );
+    const studentwithId = await this.studentService.findOnebyId(
+      createEnrolmentDto.student_id,
+    );
+    const enrolled = await this.EnrolmentRepository.findOne({
+      where: {
+        student_id:studentwithId,
+      },
+      relations: {
+        student_id: true,
+        course_code: true,
+      },
     });
-    const coursewithCode = await this.CourseRepository.findOneBy({
-      code: createEnrolmentDto.course_code,
-    });
+    console.log(enrolled);
 
-    if (!studentwithId) {
-      throw new BadRequestException('Student with this id does not exist');
-    }
-    if (!coursewithCode) {
-      throw new BadRequestException('Course does not exist');
-    }
-    const alreadyEnrolledStudent = await this.EnrolmentRepository.findOneBy({
-      course_code: coursewithCode,
-      student_id: studentwithId,
-    });
+    console.log(coursewithCode, studentwithId);
+
     if (coursewithCode.type === CourseStatus.free) {
-      console.log('Already Enrolled Student:', alreadyEnrolledStudent);
-
-      if (alreadyEnrolledStudent) {
-        throw new BadRequestException(
-          'Student is already enrolled in this course',
-        );
-      }
-
       if (new Date(coursewithCode.deadline) < new Date()) {
         throw new BadRequestException('Deadline has passed');
       }
@@ -76,7 +68,7 @@ export class EnrolmentService {
       };
     }
 
-    const session = await this.BuyCourse(
+    const session = await this.courseService.BuyCourse(
       createEnrolmentDto.course_code,
       createEnrolmentDto.student_id,
     );
@@ -89,48 +81,6 @@ export class EnrolmentService {
       };
     }
     throw new BadRequestException('an error occured');
-  }
-  async BuyCourse(course_code: string, email: string) {
-    const courseExist = await this.CourseRepository.findOne({
-      where: {
-        code: course_code,
-      },
-    });
-    const student = await this.StudentRepository.findOne({
-      where: {
-        email,
-      },
-    });
-
-    const priceId = await this.stripeService.createProductPrice(
-      course_code,
-      courseExist.price,
-    );
-    if (!priceId) {
-      throw new Error('Error in generating price ');
-    }
-    const { code, name, description, price, type } = courseExist;
-    const courseDetails = {
-      code,
-      name,
-      description,
-      price,
-      type,
-      email,
-    };
-    const session = await this.stripeService.createCheckoutSession(
-      priceId,
-      courseDetails,
-    );
-    const payment = this.paymentRepository.create({
-      amount: session.amount_subtotal,
-      course_code: courseExist,
-      status: PaymentStatus.pending,
-      student_id: student,
-      session_id: session.id,
-    });
-    await this.paymentRepository.save(payment);
-    return session;
   }
 
   async getAllEnromentsbyId(email: string) {

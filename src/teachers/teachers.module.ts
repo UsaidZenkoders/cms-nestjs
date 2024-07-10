@@ -14,6 +14,7 @@ import { Appointment } from 'src/appointment/entities/appointment';
 import { MailService } from 'src/mail/mail.service';
 import { StripeService } from 'src/stripe/stripe.service';
 import { Payments } from 'src/payments/entities/payments.entity';
+import { StudentsService } from 'src/students/students.service';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { Payments } from 'src/payments/entities/payments.entity';
     ImageUploadService,
     AppointmentService,
     MailService,
-    StripeService
+    StripeService,
+    StudentsService
   ],
 })
 export class TeachersModule {}

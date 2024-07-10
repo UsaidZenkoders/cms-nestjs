@@ -14,12 +14,17 @@ import { Enrolment } from 'src/enrolment/entities/enrolment.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { PaginationSearchDto } from 'src/students/dto/pagination-seach.dto';
 import { StripeService } from 'src/stripe/stripe.service';
+import { Student } from 'src/students/entities/student.entity';
 
 @Injectable()
 export class CoursesService {
   constructor(
     @InjectRepository(Course) private CourseRepository: Repository<Course>,
     @InjectRepository(Teacher) private TeacherRepository: Repository<Teacher>,
+    @InjectRepository(Student) private StudentRepository: Repository<Student>,
+    @InjectRepository(Enrolment)
+    private EnrolmentRepository: Repository<Enrolment>,
+    private readonly stripeService: StripeService,
   ) {}
   async create(createCourseDto: CreateCourseDto) {
     try {
@@ -99,9 +104,7 @@ export class CoursesService {
       if (!coursebyId) {
         throw new NotFoundException('Course doesnot exist');
       }
-      return {
-        Course: coursebyId,
-      };
+      return coursebyId;
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -161,5 +164,37 @@ export class CoursesService {
     } catch (error) {
       throw new InternalServerErrorException(error.messsage);
     }
+  }
+  async BuyCourse(course_code: string, email: string) {
+    const courseExist = await this.CourseRepository.findOne({
+      where: {
+        code: course_code,
+      },
+    });
+
+    const priceId = await this.stripeService.createProductPrice(
+      course_code,
+      courseExist.price,
+    );
+    if (!priceId) {
+      throw new Error('Error in generating price ');
+    }
+    const { code, name, description, price, type } = courseExist;
+    const stringedPrice = price.toString();
+    const courseDetails = {
+      code,
+      name,
+      description,
+      price,
+      type,
+      email,
+      stringedPrice,
+    };
+    const session = await this.stripeService.createCheckoutSession(
+      priceId,
+      courseDetails,
+    );
+
+    return session;
   }
 }
