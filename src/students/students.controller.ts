@@ -27,8 +27,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateAppointmentDto } from 'src/appointment/dto/create-appointment.dto';
 import { AppointmentService } from 'src/appointment/appointment.service';
 import { LoggedInUser } from 'src/decorators/logged-in-user.decorator';
-@UseGuards(AuthenticationGuard, AuthorizationGuard)
-@Roles(Role.student)
+// @UseGuards(AuthenticationGuard, AuthorizationGuard)
+// @Roles(Role.student)
 @Controller('students')
 export class StudentsController {
   constructor(

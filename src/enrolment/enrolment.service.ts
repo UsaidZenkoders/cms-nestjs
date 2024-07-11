@@ -15,10 +15,10 @@ import { StudentsService } from 'src/students/students.service';
 @Injectable()
 export class EnrolmentService {
   constructor(
-    @InjectRepository(Student)
-    private StudentRepository: Repository<Student>,
     @InjectRepository(Enrolment)
     private EnrolmentRepository: Repository<Enrolment>,
+    @InjectRepository(Student)
+    private StudentRepository: Repository<Student>,
     @InjectRepository(Course)
     private CourseRepository: Repository<Course>,
     private readonly courseService: CoursesService,
@@ -34,7 +34,8 @@ export class EnrolmentService {
     );
     const enrolled = await this.EnrolmentRepository.findOne({
       where: {
-        student_id:studentwithId,
+       student_id:studentwithId,
+       course_code:coursewithCode
       },
       relations: {
         student_id: true,

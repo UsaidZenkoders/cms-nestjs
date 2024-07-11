@@ -7,4 +7,5 @@ export class CreateChatRoomDto {
   @IsNotEmpty()
   @IsEmail()
   student_id: string;
+ 
 }
