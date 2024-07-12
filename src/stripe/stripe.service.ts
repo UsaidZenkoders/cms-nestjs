@@ -22,6 +22,13 @@ interface MetaData {
   email: string;
   stringedPrice: string;
 }
+// interface Customer {
+//   email: string;
+// }
+// interface Item {
+//   code: string;
+//   priceId: string;
+// }
 
 @Injectable()
 export class StripeService {
@@ -43,10 +50,27 @@ export class StripeService {
       },
     );
   }
+  // async createCustomer({ email }: Customer) {
+  //   const customer = await this.stripe.customers.create({
+  //     email,
+  //   });
+  //   return customer;
+  // }
+  async createProduct(code: string, coursePrice: number) {
+    const price = await this.createProductPrice(code, coursePrice);
+    const product = await this.stripe.products.create({
+      name: 'Premium Plan',
+      metadata: {
+        code,
+      },
+    });
+    return product;
+  }
+
   async createProductPrice(
     course_code: string,
     coursePrice: number,
-  ): Promise<string> {
+  ): Promise<Stripe.Price> {
     const price = await this.stripe.prices.create({
       currency: 'usd',
       unit_amount: coursePrice,
@@ -54,12 +78,30 @@ export class StripeService {
         name: course_code,
       },
     });
-    console.log(price.id);
-    return price.id;
+    return price;
   }
+  // async createSubscriptionPlan(customerId: string, { priceId, code }: Item) {
+  //   try {
+  //     const subscription = await this.stripe.subscriptions.create({
+  //       customer: customerId,
+  //       items: [
+  //         {
+  //           price: priceId,
+  //           metadata: { code },
+  //         },
+  //       ],
+  //     });
+  //     console.log('Subscription created:', subscription);
+  //     return subscription;
+  //   } catch (error) {
+  //     console.error('Error creating subscription:', error);
+  //     throw error;
+  //   }
+  // }
+
   async createCheckoutSession(priceId: string, metadata: MetaData) {
     try {
-      const { code, name, description, type, email, stringedPrice } = metadata;
+      const { code, name, description, type, email ,stringedPrice} = metadata;
       console.log(code, name);
       const session = await this.stripe.checkout.sessions.create({
         success_url: 'https://example.com/success',
@@ -71,6 +113,7 @@ export class StripeService {
             quantity: 1,
           },
         ],
+
         payment_intent_data: {
           metadata: { code, description, type, email, name, stringedPrice },
         },
@@ -84,6 +127,35 @@ export class StripeService {
         `Failed to create Stripe checkout session: ${error.message}`,
       );
     }
+  }
+  async createSubscriptionSession(metadata:any) {
+    const prod = await this.stripe.products.retrieve('prod_QSfakQ3K6wRnyU');
+    const price = await this.stripe.prices.retrieve(
+      prod.default_price.toString(),
+    );
+    const { code, name, description, type, email ,stringedPrice} = metadata;
+
+    const session = await this.stripe.checkout.sessions.create({
+      success_url: 'http://localhost:3000/api/',
+      line_items: [
+        {
+          price: price.id,
+          quantity: 2,
+        },
+      ],
+      mode: 'subscription',
+      metadata: {
+        eventType: 'BUY COURSE',
+      },
+      subscription_data: {
+        metadata: { code, description, type, email, name, stringedPrice },
+      },
+      
+    });
+    return {
+      message: 'Visit Url for subscription',
+      url: session.url,
+    };
   }
 
   async createWebHook(
@@ -118,6 +190,9 @@ export class StripeService {
       case 'payment_intent.payment_failed':
         await this.handleAsyncPaymentFailed(event.data.object.id);
         break;
+      case 'customer.subscription.created':
+        console.log('SUBSCRIPTION EVENT',event.data.object as Stripe.Subscription);
+
       default:
         console.log('default');
     }

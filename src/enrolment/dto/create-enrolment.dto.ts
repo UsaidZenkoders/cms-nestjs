@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnrolmentStatus } from 'src/enum/enrolment-status.enum';
 
 export class CreateEnrolmentDto {
@@ -8,5 +8,7 @@ export class CreateEnrolmentDto {
   @IsNotEmpty()
   @IsString()
   course_code: string;
+  @IsOptional()
+  subscribe:boolean
 
 }

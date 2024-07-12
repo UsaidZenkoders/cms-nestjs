@@ -172,26 +172,51 @@ export class CoursesService {
       },
     });
 
-    const priceId = await this.stripeService.createProductPrice(
+    const {id} = await this.stripeService.createProductPrice(
       course_code,
       courseExist.price,
     );
-    if (!priceId) {
+
+    if (!id) {
       throw new Error('Error in generating price ');
     }
     const { code, name, description, price, type } = courseExist;
     const stringedPrice = price.toString();
+    console.log(stringedPrice)
     const courseDetails = {
       code,
       name,
       description,
-      price,
       type,
       email,
       stringedPrice,
     };
     const session = await this.stripeService.createCheckoutSession(
-      priceId,
+      id,
+      courseDetails,
+    );
+
+    return session;
+  }
+
+  async SubscribeCourse(course_code: string, email: string) {
+    const courseExist = await this.CourseRepository.findOne({
+      where: {
+        code: course_code,
+      },
+    });
+    const { code, name, description, price, type } = courseExist;
+    const stringedPrice = price.toString();
+    console.log(stringedPrice)
+    const courseDetails = {
+      code,
+      name,
+      description,
+      type,
+      email,
+      stringedPrice,
+    };
+    const session = await this.stripeService.createSubscriptionSession(
       courseDetails,
     );
 

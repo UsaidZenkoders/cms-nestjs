@@ -34,8 +34,8 @@ export class EnrolmentService {
     );
     const enrolled = await this.EnrolmentRepository.findOne({
       where: {
-       student_id:studentwithId,
-       course_code:coursewithCode
+        student_id: studentwithId,
+        course_code: coursewithCode,
       },
       relations: {
         student_id: true,
@@ -67,8 +67,20 @@ export class EnrolmentService {
           course: coursewithCode,
         },
       };
-    }
+    } else if (createEnrolmentDto.subscribe) {
+      const session = await this.courseService.SubscribeCourse(
+        createEnrolmentDto.course_code,
+        createEnrolmentDto.student_id,
+      );
 
+      if (session.url) {
+        return {
+          message:
+            'Subscription session created successfully , visit the url for payments',
+          url: session.url,
+        };
+      }
+    }
     const session = await this.courseService.BuyCourse(
       createEnrolmentDto.course_code,
       createEnrolmentDto.student_id,
@@ -81,6 +93,7 @@ export class EnrolmentService {
         url: session.url,
       };
     }
+
     throw new BadRequestException('an error occured');
   }
 
